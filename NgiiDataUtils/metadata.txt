@@ -1,0 +1,39 @@
+# This file contains metadata for your plugin. Since 
+# version 2.0 of QGIS this is the proper way to supply 
+# information about a plugin. The old method of 
+# embedding metadata in __init__.py will 
+# is no longer supported since version 2.0.
+
+# This file should be included when you package your plugin.# Mandatory items:
+
+[general]
+name=NGII Data Utils
+qgisMinimumVersion=2.14
+description=국토지리정보원 데이터 사용지원 툴
+version=0.1
+author=NGII
+email=jangbi882@gmail.com
+
+about=국토지리정보원에서 제공하는 공간데이터들을 쉽게 불려 중첩해 볼 수 있도록 지원하는 툴입니다. 온맵, 국가인터넷지도, 지형도, 정사영상 등의 자료를 올바른 공간적 위치로 손쉽게 불러올 수 있습니다. 이런 자료들을 중첩, 창분할, 그룹별 투명도 변경, 그룹별 색상변경을 통해 비교할 수 있습니다. 또한 차이점에 대해 화면 캡처와 함께 기록할 수 있습니다.
+
+tracker=http://bugs
+repository=http://repo
+# End of mandatory metadata
+
+# Recommended items:
+
+# Uncomment the following line and add your changelog:
+# changelog=
+
+# Tags are comma separated with spaces allowed
+tags=ngii
+
+homepage=http://homepage
+category=Plugins
+icon=icon.png
+# experimental flag
+experimental=False
+
+# deprecated flag (applies to the whole plugin, not just a single version)
+deprecated=False
+
