@@ -25,13 +25,14 @@ import os
 
 from PyQt4 import QtGui, uic
 from PyQt4.QtCore import pyqtSignal
+from ngii_data_utils_dockwidget_base import Ui_NgiiDataUtilsDockWidgetBase
 
-FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'ngii_data_utils_dockwidget_base.ui'))
+# FORM_CLASS, _ = uic.loadUiType(os.path.join(
+#     os.path.dirname(__file__), 'ngii_data_utils_dockwidget_base.ui'))
 
 
-class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
-
+# class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
+class NgiiDataUtilsDockWidget(QtGui.QDockWidget, Ui_NgiiDataUtilsDockWidgetBase):
     closingPlugin = pyqtSignal()
 
     def __init__(self, parent=None):
