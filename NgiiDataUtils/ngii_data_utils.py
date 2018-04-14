@@ -21,7 +21,7 @@
  ***************************************************************************/
 """
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
-from PyQt4.QtGui import QAction, QIcon
+from PyQt4.QtGui import QAction, QIcon, QMenu, QToolBar, QMenuBar,  QToolButton
 
 # Import the code for the DockWidget
 from ngii_data_utils_dockwidget import NgiiDataUtilsDockWidget
@@ -30,15 +30,17 @@ import os.path
 
 class NgiiDataUtils:
     """QGIS Plugin Implementation."""
+    mainMenuTitle = u"NGII"
+    mainMenu = None
+    menuBar = None
+
+    menuIcons = []
+    menuTexts = []
+    menuActions = []
+    menuActions = []
+    toolbarActions = []
 
     def __init__(self, iface):
-        """Constructor.
-
-        :param iface: An interface instance that will be passed to this class
-            which provides the hook by which you can manipulate the QGIS
-            application at run time.
-        :type iface: QgisInterface
-        """
         # Save reference to the QGIS interface
         self.iface = iface
 
@@ -59,118 +61,84 @@ class NgiiDataUtils:
             if qVersion() > '4.3.3':
                 QCoreApplication.installTranslator(self.translator)
 
-        # Declare instance attributes
-        self.actions = []
-        self.menu = self.tr(u'&NGII Data Utils')
-        # TODO: We are going to let the user set this up in a future iteration
-        self.toolbar = self.iface.addToolBar(u'NgiiDataUtils')
-        self.toolbar.setObjectName(u'NgiiDataUtils')
-
-        #print "** INITIALIZING NgiiDataUtils"
-
         self.pluginIsActive = False
         self.dockwidget = None
 
-
-    # noinspection PyMethodMayBeStatic
-    def tr(self, message):
-        """Get the translation for a string using Qt translation API.
-
-        We implement this ourselves since we do not inherit QObject.
-
-        :param message: String for translation.
-        :type message: str, QString
-
-        :returns: Translated version of message.
-        :rtype: QString
-        """
-        # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
-        return QCoreApplication.translate('NgiiDataUtils', message)
-
-
-    def add_action(
-        self,
-        icon_path,
-        text,
-        callback,
-        enabled_flag=True,
-        add_to_menu=True,
-        add_to_toolbar=True,
-        status_tip=None,
-        whats_this=None,
-        parent=None):
-        """Add a toolbar icon to the toolbar.
-
-        :param icon_path: Path to the icon for this action. Can be a resource
-            path (e.g. ':/plugins/foo/bar.png') or a normal file system path.
-        :type icon_path: str
-
-        :param text: Text that should be shown in menu items for this action.
-        :type text: str
-
-        :param callback: Function to be called when the action is triggered.
-        :type callback: function
-
-        :param enabled_flag: A flag indicating if the action should be enabled
-            by default. Defaults to True.
-        :type enabled_flag: bool
-
-        :param add_to_menu: Flag indicating whether the action should also
-            be added to the menu. Defaults to True.
-        :type add_to_menu: bool
-
-        :param add_to_toolbar: Flag indicating whether the action should also
-            be added to the toolbar. Defaults to True.
-        :type add_to_toolbar: bool
-
-        :param status_tip: Optional text to show in a popup when mouse pointer
-            hovers over the action.
-        :type status_tip: str
-
-        :param parent: Parent widget for the new action. Defaults None.
-        :type parent: QWidget
-
-        :param whats_this: Optional text to show in the status bar when the
-            mouse pointer hovers over the action.
-
-        :returns: The action that was created. Note that the action is also
-            added to self.actions list.
-        :rtype: QAction
-        """
-
-        icon = QIcon(icon_path)
-        action = QAction(icon, text, parent)
-        action.triggered.connect(callback)
-        action.setEnabled(enabled_flag)
-
-        if status_tip is not None:
-            action.setStatusTip(status_tip)
-
-        if whats_this is not None:
-            action.setWhatsThis(whats_this)
-
-        if add_to_toolbar:
-            self.toolbar.addAction(action)
-
-        if add_to_menu:
-            self.iface.addPluginToMenu(
-                self.menu,
-                action)
-
-        self.actions.append(action)
-
-        return action
-
-
     def initGui(self):
-        """Create the menu entries and toolbar icons inside the QGIS GUI."""
+        # 기존 NGII 메뉴가 있으면 재사용. 없으면 추가
+        self.addNgiiMenu()
+        self.togglePanel()
 
-        icon_path = ':/plugins/NgiiDataUtils/icon.png'
-        self.add_action(
-            icon_path,
-            text=self.tr(u'Ngii Data Utils'),
-            callback=self.run,
-            parent=self.iface.mainWindow())
+    def addNgiiMenu(self):
+        # https://gis.stackexchange.com/questions/227876/finding-name-of-qgis-toolbar-in-python
+        qgisMenuBar = self.iface.mainWindow().menuBar()
+
+        # 이미 NGII 메뉴 있는지 찾아보기
+        ngiiMenu = None
+        for action in qgisMenuBar.actions():
+            if action.text() == self.mainMenuTitle:
+                ngiiMenu = action.menu()
+                break
+
+        # 없음 만들고 있음 그냥 사용
+        if ngiiMenu is None:
+            self.mainMenu = QMenu(self.iface.mainWindow())
+            self.mainMenu.setTitle(self.mainMenuTitle)
+            qgisMenuBar.insertMenu(self.iface.firstRightStandardMenu().menuAction(), self.mainMenu)
+        else:
+            self.mainMenu = ngiiMenu
+
+        # 이미 NGII 툴바 있는지 찾아보기
+        ngiiToolbar = None
+        for toolbar in self.iface.mainWindow().findChildren(QToolBar):
+            # if toolbar.objectName() == self.mainMenuTitle:
+            if toolbar.windowTitle() == self.mainMenuTitle:
+                ngiiToolbar = toolbar
+                break
+
+        # 없음 만들고 있음 그냥 사용
+        if ngiiToolbar is None:
+            self.toolbar = self.iface.addToolBar(self.mainMenuTitle)
+            self.toolbar.setObjectName(self.mainMenuTitle)
+        else:
+            self.toolbar = ngiiToolbar
+
+        # 세부 메뉴, 버튼 추가
+        menuIcons = ['icon.png']
+        menuTexts = [u'국토지리정보원 데이터 중첩검사']
+        menuActions = [self.togglePanel]
+
+        assert (len(menuIcons) == len(menuTexts))
+        assert (len(menuTexts) == len(menuActions))
+
+        self.menuActions = []
+        self.toolbarActions = []
+        for i in range(0, len(menuTexts)):
+            icon = QIcon(os.path.join(os.path.dirname(__file__), 'icons', menuIcons[i]))
+            text = menuTexts[i]
+            action = QAction(icon, text, self.iface.mainWindow())
+            self.mainMenu.addAction(action)
+            action.triggered.connect(menuActions[i])
+            button = self.toolbar.addAction(icon, text, menuActions[i])
+
+            self.menuActions.append(action)
+            self.toolbarActions.append(button)
+
+    def removeNgiiMenu(self):
+        if self.toolbar is not None:
+            # 내가 등록한 툴바 아이템 제거
+            for action in self.toolbarActions:
+                self.toolbar.removeAction(action)
+            # 더이상 항목이 없으면 부모 제거
+            if len(self.toolbar.actions()) == 0:
+                self.toolbar.deleteLater()
+
+        if self.mainMenu is not None:
+            for action in self.menuActions:
+                self.mainMenu.removeAction(action)
+            print len(self.mainMenu.actions())
+            if len(self.mainMenu.actions()) == 0:
+                self.mainMenu.deleteLater()
 
     #--------------------------------------------------------------------------
 
@@ -192,23 +160,12 @@ class NgiiDataUtils:
 
 
     def unload(self):
-        """Removes the plugin menu item and icon from QGIS GUI."""
-
-        #print "** UNLOAD NgiiDataUtils"
-
-        for action in self.actions:
-            self.iface.removePluginMenu(
-                self.tr(u'&NGII Data Utils'),
-                action)
-            self.iface.removeToolBarIcon(action)
-        # remove the toolbar
-        del self.toolbar
+        self.iface.removeDockWidget(self.dockwidget)
+        self.removeNgiiMenu()
 
     #--------------------------------------------------------------------------
 
-    def run(self):
-        """Run method that loads and starts the plugin"""
-
+    def togglePanel(self):
         if not self.pluginIsActive:
             self.pluginIsActive = True
 
@@ -228,4 +185,5 @@ class NgiiDataUtils:
             # TODO: fix to allow choice of dock location
             self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dockwidget)
             self.dockwidget.show()
-
+        else:
+            self.dockwidget.close()
