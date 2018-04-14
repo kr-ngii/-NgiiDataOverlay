@@ -65,11 +65,19 @@ class NgiiDataUtils:
         self.dockwidget = None
 
     def initGui(self):
+        # 메뉴와 툴바에 추가할 항목 정의
+        menuIcons = ['icon.png']
+        menuTexts = [u'국토지리정보원 데이터 중첩검사']
+        menuActions = [self.togglePanel]
+
+        assert (len(menuIcons) == len(menuTexts))
+        assert (len(menuTexts) == len(menuActions))
+
         # 기존 NGII 메뉴가 있으면 재사용. 없으면 추가
-        self.addNgiiMenu()
+        self.addNgiiMenu(menuIcons, menuTexts, menuActions)
         self.togglePanel()
 
-    def addNgiiMenu(self):
+    def addNgiiMenu(self, menuIcons, menuTexts, menuActions):
         # https://gis.stackexchange.com/questions/227876/finding-name-of-qgis-toolbar-in-python
         qgisMenuBar = self.iface.mainWindow().menuBar()
 
@@ -104,13 +112,6 @@ class NgiiDataUtils:
             self.toolbar = ngiiToolbar
 
         # 세부 메뉴, 버튼 추가
-        menuIcons = ['icon.png']
-        menuTexts = [u'국토지리정보원 데이터 중첩검사']
-        menuActions = [self.togglePanel]
-
-        assert (len(menuIcons) == len(menuTexts))
-        assert (len(menuTexts) == len(menuActions))
-
         self.menuActions = []
         self.toolbarActions = []
         for i in range(0, len(menuTexts)):
