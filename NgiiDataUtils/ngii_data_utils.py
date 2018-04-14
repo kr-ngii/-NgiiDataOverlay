@@ -34,9 +34,6 @@ class NgiiDataUtils:
     mainMenu = None
     menuBar = None
 
-    menuIcons = []
-    menuTexts = []
-    menuActions = []
     menuActions = []
     toolbarActions = []
 
@@ -75,7 +72,7 @@ class NgiiDataUtils:
 
         # 기존 NGII 메뉴가 있으면 재사용. 없으면 추가
         self.addNgiiMenu(menuIcons, menuTexts, menuActions)
-        self.togglePanel()
+        # self.togglePanel()
 
     def addNgiiMenu(self, menuIcons, menuTexts, menuActions):
         # https://gis.stackexchange.com/questions/227876/finding-name-of-qgis-toolbar-in-python
@@ -161,7 +158,8 @@ class NgiiDataUtils:
 
 
     def unload(self):
-        self.iface.removeDockWidget(self.dockwidget)
+        if self.dockwidget:
+            self.iface.removeDockWidget(self.dockwidget)
         self.removeNgiiMenu()
 
     #--------------------------------------------------------------------------
