@@ -3,6 +3,7 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from qgis.core import *
+from PyQt4 import phonon
 
 import re
 import numpy as np
@@ -12,6 +13,7 @@ from PIL import Image
 from io import BytesIO
 import tempfile
 import threading, time
+from shutil import copyfile
 
 # import OGR
 from osgeo import ogr, gdal, osr
@@ -45,33 +47,24 @@ class StoppedByUserException(Exception):
         # Call the base class constructor with the parameters it needs
         super(StoppedByUserException, self).__init__(message)
 
+
 #########################
 # CLASS for multitasking PDF Open
 #########################
 class PdfOpenThread(threading.Thread):
     # pdf = srcDriver.Open(self.pdfPath, 0)
-    srcDriver = None
     pdfPath = None
     outPdf = None
 
-    def __init__(self, srcDriver, pdfPath):
-        self.srcDriver = srcDriver
+    def __init__(self,  pdfPath):
         self.pdfPath = pdfPath
         threading.Thread.__init__(self)
 
     def run(self):
-        self.outPdf = self.srcDriver.Open(self.pdfPath, 0)
+        srcDriver = ogr.GetDriverByName("PDF")
+        self.outPdf = srcDriver.Open(self.pdfPath, 0)
 
         return
-
-def threadExecutePdfOpen(cursor, sql, param=None):
-    dbt = PdfOpenThread(cursor, sql, param)
-    dbt.start()
-
-    while threading.activeCount() > 1:
-        QgsApplication.processEvents(QEventLoop.ExcludeUserInputEvents)
-        time.sleep(0.1)
-
 
 
 #########################
@@ -269,6 +262,11 @@ class OnMapLoader():
     imgBox = None
     mainGroup = None
 
+    scrollAreaWidgetContents = None
+    gridLayout_2 = None
+    groupBoxList = None
+    iGroupBox = 0
+
     isOnProcessing = False
     forceStop = False
 
@@ -279,17 +277,100 @@ class OnMapLoader():
         """Constructor."""
         self.iface = iface
         self.parent = parent
+        self.groupBoxList = dict()
         try:
             self.progressMain = parent.prgMain
             self.progressSub = parent.prgSub
             self.lblStatus = parent.lblStatus
             self.editLog = parent.editLog
+            self.scrollAreaWidgetContents = parent.scrollAreaWidgetContents
+            self.gridLayout_2 = parent.gridLayout_2
         except:
             pass
 
-    # https://jupiny.com/2016/09/25/decorator-class/
-    # def __call__(self, *args, **kwargs):
-    #     pass
+    def addGroupBox(self, pdfPath):
+        self.iGroupBox += 1
+
+        groupBox_1 = QGroupBox(self.scrollAreaWidgetContents)
+        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(groupBox_1.sizePolicy().hasHeightForWidth())
+        groupBox_1.setSizePolicy(sizePolicy)
+        groupBox_1.setMaximumSize(QSize(16777215, 130))
+        groupBox_1.setAlignment(Qt.AlignHCenter|Qt.AlignTop)
+        groupBox_1.setObjectName("groupBox_{}".format(self.iGroupBox))
+        gridLayout = QGridLayout(groupBox_1)
+        gridLayout.setObjectName("gridLayout")
+        horLayout1_1 = QHBoxLayout()
+        horLayout1_1.setObjectName("horLayout1_{}".format(self.iGroupBox))
+        btnToSpWin_1 = QPushButton(groupBox_1)
+        btnToSpWin_1.setObjectName("btnToSpWin_{}".format(self.iGroupBox))
+        horLayout1_1.addWidget(btnToSpWin_1)
+        btnRemove_1 = QPushButton(groupBox_1)
+        sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(btnRemove_1.sizePolicy().hasHeightForWidth())
+        btnRemove_1.setSizePolicy(sizePolicy)
+        btnRemove_1.setMinimumSize(QSize(30, 0))
+        btnRemove_1.setMaximumSize(QSize(30, 16777215))
+        btnRemove_1.setObjectName("btnRemove_{}".format(self.iGroupBox))
+        horLayout1_1.addWidget(btnRemove_1)
+        gridLayout.addLayout(horLayout1_1, 0, 0, 1, 1)
+        horLayout3_1 = QHBoxLayout()
+        horLayout3_1.setObjectName("horLayout3_{}".format(self.iGroupBox))
+        lblColor_1 = QLabel(groupBox_1)
+        lblColor_1.setObjectName("lblColor_{}".format(self.iGroupBox))
+        horLayout3_1.addWidget(lblColor_1)
+        btnSelColor_1 = QPushButton(groupBox_1)
+        btnSelColor_1.setObjectName("btnSelColor_{}".format(self.iGroupBox))
+        horLayout3_1.addWidget(btnSelColor_1)
+        btnResetColor_1 = QPushButton(groupBox_1)
+        sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(btnResetColor_1.sizePolicy().hasHeightForWidth())
+        btnResetColor_1.setSizePolicy(sizePolicy)
+        btnResetColor_1.setMinimumSize(QSize(50, 0))
+        btnResetColor_1.setMaximumSize(QSize(50, 16777215))
+        btnResetColor_1.setObjectName("btnResetColor_{}".format(self.iGroupBox))
+        horLayout3_1.addWidget(btnResetColor_1)
+        gridLayout.addLayout(horLayout3_1, 2, 0, 1, 1)
+        horLayout2_1 = QHBoxLayout()
+        horLayout2_1.setObjectName("horLayout2_{}".format(self.iGroupBox))
+        lblTrans_1 = QLabel(groupBox_1)
+        lblTrans_1.setObjectName("lblTrans_{}".format(self.iGroupBox))
+        horLayout2_1.addWidget(lblTrans_1)
+        sldTrans_1 = phonon.Phonon.SeekSlider(groupBox_1)
+        sldTrans_1.setObjectName("sldTrans_{}".format(self.iGroupBox))
+        horLayout2_1.addWidget(sldTrans_1)
+        gridLayout.addLayout(horLayout2_1, 1, 0, 1, 1)
+        self.gridLayout_2.addWidget(groupBox_1, 0, 0, 1, 1)
+
+        filename, extension = os.path.splitext(os.path.basename(pdfPath))
+        groupBoxTitle = u"[온맵]{}".format(filename)
+        groupBox_1.setTitle(groupBoxTitle)
+        btnToSpWin_1.setText(u"분할창으로 띄우기")
+        btnRemove_1.setText(u"제거")
+        lblColor_1.setText(u"색  상:")
+        btnSelColor_1.setText(u"COLOR")
+        btnResetColor_1.setText(u"초기화")
+        lblTrans_1.setText(u"투명도:")
+
+        groupBoxDict = \
+            {
+                "title": groupBoxTitle,
+                "groupBox": groupBox_1,
+                "btnToSpWin": btnToSpWin_1,
+                "btnRemove": btnRemove_1,
+                "btnSelColor": btnSelColor_1,
+                "btnResetColor": btnResetColor_1
+            }
+        self.groupBoxList[self.iGroupBox] = groupBoxDict
+
+    def removeGroupBox(self):
+        pass
 
     # 상태정보 표시
     def progText(self, text):
@@ -339,13 +420,14 @@ class OnMapLoader():
                 raise StoppedByUserException()
 
             self.importPdfRaster()
-
             if self.forceStop:
                 raise StoppedByUserException()
 
             canvas = self.iface.mapCanvas()
             canvas.setExtent(canvas.mapSettings().fullExtent())
-            canvas.refresh()
+
+            self.addGroupBox(filepath)
+
             self.info(u"온맵 불러오기 성공!")
             self.progressMain.setValue(0)
             self.progressSub.setValue(0)
@@ -408,11 +490,10 @@ class OnMapLoader():
 
         try:
             # get the driver
-            srcDriver = ogr.GetDriverByName("PDF")
 
             # opening the PDF
             # pdf = srcDriver.Open(self.pdfPath, 0)
-            trd = PdfOpenThread(srcDriver, self.pdfPath)
+            trd = PdfOpenThread(self.pdfPath)
             trd.start()
 
             while threading.activeCount() > 1:
@@ -558,16 +639,20 @@ class OnMapLoader():
             self.progressMain.setValue(0)
 
             for layerInfo in self.layerInfoList:
+                crrIndex += 1
+                self.progressMain.setValue(crrIndex)
+
                 vPointLayer = None
                 vLineLayer = None
                 vPolygonLayer = None
-                layerName = layerInfo["name"]
 
                 # 지도정보_ 로 시작하는 레이만 처리
+                layerName = layerInfo["name"]
                 if not layerName.startswith(LAYER_FILTER):
                     continue
 
                 layerName = layerName.replace(LAYER_FILTER, "")
+                self.progText(u"{} 레이어 처리중({}/{})...".format(layerName, crrIndex, totalCount))
 
                 # 서브 그룹 만들기
                 layerGroupSpilt = layerName.split(u"_")
@@ -576,10 +661,6 @@ class OnMapLoader():
                     if subGroup:
                         subGroup.setExpanded(False)
                     subGroup = self.mainGroup.addGroup(subGroupName)
-
-                crrIndex += 1
-                self.progressMain.setValue(self.progressMain.value() + 1)
-                self.progText(u"{} 레이어 처리중({}/{})...".format(layerName, crrIndex, totalCount))
 
                 # 선택된 레이어만 가져오기
                 self.debug(u"Processing Layer: {}".format(layerName))
@@ -665,8 +746,11 @@ class OnMapLoader():
             self.error(u"벡터 가져오기 실패")
             QgsApplication.restoreOverrideCursor()
             return False
+        finally:
+            self.iface.mapCanvas().refresh()
+            QgsApplication.restoreOverrideCursor()
+            force_gui_update()
 
-        QgsApplication.restoreOverrideCursor()
         return True
 
     def _TransformGeom(self, geometry):
@@ -904,7 +988,9 @@ class OnMapLoader():
             self.progText(u"GeoTIFF로 저장중...")
             outImage = gdal.Open(tempFilePath)
             driver = gdal.GetDriverByName('GTiff')
-            gtiff = driver.CreateCopy(outputFilePath, outImage)
+            _, tempGeoTiffFilePath = tempfile.mkstemp(".tif")
+            # gtiff = driver.CreateCopy(outputFilePath, outImage)
+            gtiff = driver.CreateCopy(tempGeoTiffFilePath, outImage)
             gtiff.SetProjection(crs_wkt)
 
             # P1(C): x_origin,
@@ -918,7 +1004,20 @@ class OnMapLoader():
             # gtiff.close()
             del gtiff
 
-            rasterLayer = QgsRasterLayer(outputFilePath, u"영상")
+            geoTiffPath = outputFilePath
+            try:
+                copyfile(tempGeoTiffFilePath, outputFilePath)
+            except:
+                geoTiffPath = tempGeoTiffFilePath
+
+            try:
+                os.remove(tempGeoTiffFilePath)
+            except:
+                pass
+
+            self.info(u"정사영상 추출 완료")
+
+            rasterLayer = QgsRasterLayer(geoTiffPath, u"정사영상")
             QgsMapLayerRegistry.instance().addMapLayer(rasterLayer, False)
             self.mainGroup.addLayer(rasterLayer)
 
@@ -933,7 +1032,10 @@ class OnMapLoader():
             QgsApplication.restoreOverrideCursor()
             self.error(u"영상 가져오기 실패")
             return False
+        finally:
+            QgsApplication.restoreOverrideCursor()
+            self.iface.mapCanvas().refresh()
+            force_gui_update()
 
-        QgsApplication.restoreOverrideCursor()
         self.info(u"영상 가져오기 완료")
         return True
