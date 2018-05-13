@@ -13,6 +13,7 @@ from io import BytesIO
 import tempfile
 import threading, time
 from shutil import copyfile
+from PyQt4 import phonon
 
 # import OGR
 from osgeo import ogr, gdal, osr
@@ -261,6 +262,11 @@ class OnMapLoader():
     imgBox = None
     mainGroup = None
 
+    iGroupBox = 0
+    groupBoxList = None
+    scrollAreaWidgetContents = None
+    gridLayout_2 = None
+
     isOnProcessing = False
     forceStop = False
 
@@ -271,17 +277,103 @@ class OnMapLoader():
         """Constructor."""
         self.iface = iface
         self.parent = parent
+        self.groupBoxList = dict()
         try:
             self.progressMain = parent.prgMain
             self.progressSub = parent.prgSub
             self.lblStatus = parent.lblStatus
             self.editLog = parent.editLog
+            self.scrollAreaWidgetContents = parent.scrollAreaWidgetContents
+            self.gridLayout_2 = parent.gridLayout_2
         except:
             pass
 
-    # https://jupiny.com/2016/09/25/decorator-class/
-    # def __call__(self, *args, **kwargs):
-    #     pass
+    def appendGroupBox(self):
+        self.iGroupBox += 1
+        title, extension = os.path.splitext(os.path.basename(self.pdfPath))
+
+        groupBox_1 = QGroupBox(self.scrollAreaWidgetContents)
+        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(groupBox_1.sizePolicy().hasHeightForWidth())
+        groupBox_1.setSizePolicy(sizePolicy)
+        groupBox_1.setMaximumSize(QSize(16777215, 130))
+        groupBox_1.setAlignment(Qt.AlignHCenter|Qt.AlignTop)
+        groupBox_1.setObjectName("groupBox_{}".format(self.iGroupBox))
+        gridLayout = QGridLayout(groupBox_1)
+        gridLayout.setObjectName("gridLayout")
+        horLayout1_1 = QHBoxLayout()
+        horLayout1_1.setObjectName("horLayout1_{}".format(self.iGroupBox))
+        btnToSpWin_1 = QPushButton(groupBox_1)
+        btnToSpWin_1.setObjectName("btnToSpWin_{}".format(self.iGroupBox))
+        horLayout1_1.addWidget(btnToSpWin_1)
+        btnRemove_1 = QPushButton(groupBox_1)
+        sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(btnRemove_1.sizePolicy().hasHeightForWidth())
+        btnRemove_1.setSizePolicy(sizePolicy)
+        btnRemove_1.setMinimumSize(QSize(30, 0))
+        btnRemove_1.setMaximumSize(QSize(30, 16777215))
+        btnRemove_1.setObjectName("btnRemove_{}".format(self.iGroupBox))
+        horLayout1_1.addWidget(btnRemove_1)
+        gridLayout.addLayout(horLayout1_1, 0, 0, 1, 1)
+        horLayout3_1 = QHBoxLayout()
+        horLayout3_1.setObjectName("horLayout3_{}".format(self.iGroupBox))
+        lblColor_1 = QLabel(groupBox_1)
+        lblColor_1.setObjectName("lblColor_{}".format(self.iGroupBox))
+        horLayout3_1.addWidget(lblColor_1)
+        btnSelColor_1 = QPushButton(groupBox_1)
+        btnSelColor_1.setObjectName("btnSelColor_{}".format(self.iGroupBox))
+        horLayout3_1.addWidget(btnSelColor_1)
+        btnResetColor_1 = QPushButton(groupBox_1)
+        sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(btnResetColor_1.sizePolicy().hasHeightForWidth())
+        btnResetColor_1.setSizePolicy(sizePolicy)
+        btnResetColor_1.setMinimumSize(QSize(50, 0))
+        btnResetColor_1.setMaximumSize(QSize(50, 16777215))
+        btnResetColor_1.setObjectName("btnResetColor_{}".format(self.iGroupBox))
+        horLayout3_1.addWidget(btnResetColor_1)
+        gridLayout.addLayout(horLayout3_1, 2, 0, 1, 1)
+        horLayout2_1 = QHBoxLayout()
+        horLayout2_1.setObjectName("horLayout2_{}".format(self.iGroupBox))
+        lblTrans_1 = QLabel(groupBox_1)
+        lblTrans_1.setObjectName("lblTrans_{}".format(self.iGroupBox))
+        horLayout2_1.addWidget(lblTrans_1)
+        sldTrans_1 = QSlider(groupBox_1)
+        sldTrans_1.setOrientation(Qt.Horizontal)
+        sldTrans_1.setObjectName("sldTrans_{}".format(self.iGroupBox))
+        horLayout2_1.addWidget(sldTrans_1)
+        gridLayout.addLayout(horLayout2_1, 1, 0, 1, 1)
+        self.gridLayout_2.addWidget(groupBox_1, 0, 0, 1, 1)
+
+        groupBox_1.setTitle(u"[온맵](B090)온맵_37612068.pdf")
+        btnToSpWin_1.setText(u"분할창으로 띄우기")
+        btnRemove_1.setText(u"제거")
+        lblColor_1.setText(u"색  상:")
+        btnSelColor_1.setText(u"COLOR")
+        btnResetColor_1.setText(u"초기화")
+        lblTrans_1.setText(u"투명도:")
+
+        groupBox = {
+            "id": self.iGroupBox,
+            "title": title,
+            "object": groupBox_1,
+            "btnToSpWin": btnToSpWin_1,
+            "btnRemove": btnRemove_1,
+            "btnSelColor": btnSelColor_1,
+            "btnResetColor": btnResetColor_1,
+            "sldTrans": sldTrans_1
+        }
+
+        # self.groupBoxList[self.iGroupBox] = groupBox
+        pass
+
+    def removeGroupBox(self):
+        pass
 
     # 상태정보 표시
     def progText(self, text):
@@ -331,7 +423,6 @@ class OnMapLoader():
                 raise StoppedByUserException()
 
             self.importPdfRaster()
-
             if self.forceStop:
                 raise StoppedByUserException()
 
@@ -341,6 +432,8 @@ class OnMapLoader():
             self.info(u"온맵 불러오기 성공!")
             self.progressMain.setValue(0)
             self.progressSub.setValue(0)
+
+            self.appendGroupBox()
 
             self.isOnProcessing = False
 
