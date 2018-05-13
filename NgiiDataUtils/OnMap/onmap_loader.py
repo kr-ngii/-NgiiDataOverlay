@@ -10,6 +10,7 @@ import copy
 import os
 from PIL import Image
 from io import BytesIO
+import tempfile
 
 # import OGR
 from osgeo import ogr, gdal, osr
@@ -224,7 +225,7 @@ def mapNoToMapBox(mapNo):
 class OnMapLoader():
     iface = None
     parent = None
-    progress = None
+    progressMain = None
     progressSub = None
     lblStatus = None
     editLog = None
@@ -237,6 +238,8 @@ class OnMapLoader():
     mapNo = None
     bbox = None
     imgBox = None
+    mainGroup = None
+
     isOnProcessing = False
     forceStop = False
 
@@ -248,7 +251,7 @@ class OnMapLoader():
         self.iface = iface
         self.parent = parent
         try:
-            self.progress = parent.prgMain
+            self.progressMain = parent.prgMain
             self.progressSub = parent.prgSub
             self.lblStatus = parent.lblStatus
             self.editLog = parent.editLog
@@ -307,6 +310,8 @@ class OnMapLoader():
             canvas.setExtent(canvas.mapSettings().fullExtent())
             canvas.refresh()
             self.info(u"온맵 불러오기 성공!")
+            self.progressSub.setValue(0)
+            self.progressMain.setValue(0)
 
             self.isOnProcessing = False
 
@@ -335,8 +340,8 @@ class OnMapLoader():
         return True
 
     def getPdfInformation(self):
-        self.progress.setMinimum(0)
-        self.progress.setMaximum(0)
+        self.progressMain.setMinimum(0)
+        self.progressMain.setMaximum(0)
         self.progText(u"선택한 온맵 파일 분석중...")
         self.info(u"PDF 파일에서 정보추출 시작...")
         force_gui_update()
@@ -468,8 +473,8 @@ class OnMapLoader():
 
         self.info(u"정보추출 완료.")
         self.progText(u"작업 대기중")
-        self.progress.setMinimum(0)
-        self.progress.setMaximum(100)
+        self.progressMain.setMinimum(0)
+        self.progressMain.setMaximum(100)
 
         # Return Values
         self.pdf = pdf
@@ -495,15 +500,15 @@ class OnMapLoader():
             # create layer group
             root = QgsProject.instance().layerTreeRoot()
             filename, extension = os.path.splitext(os.path.basename(self.pdfPath))
-            mainGroup = root.addGroup(filename)
+            self.mainGroup = root.addGroup(filename)
             subGroup = None
             subGroupName = None
 
             # Create QGIS Layer
             totalCount = len(self.layerInfoList)
             crrIndex = 0
-            self.progress.setMinimum(0)
-            self.progress.setMaximum(totalCount)
+            self.progressMain.setMinimum(0)
+            self.progressMain.setMaximum(totalCount)
 
             for layerInfo in self.layerInfoList:
                 vPointLayer = None
@@ -521,10 +526,10 @@ class OnMapLoader():
                 layerGroupSpilt = layerName.split(u"_")
                 if subGroupName != layerGroupSpilt[0]:
                     subGroupName = layerGroupSpilt[0]
-                    subGroup = mainGroup.addGroup(subGroupName)
+                    subGroup = self.mainGroup.addGroup(subGroupName)
 
                 crrIndex += 1
-                self.progress.setValue(crrIndex)
+                self.progressMain.setValue(crrIndex)
                 self.progText(u"{} 레이어 처리중({}/{})...".format(layerName, crrIndex, totalCount))
 
                 # 선택된 레이어만 가져오기
@@ -647,8 +652,8 @@ class OnMapLoader():
         QgsApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             self.info(u"영상 정보 추출시작")
-            self.progress.setMinimum(0)
-            self.progress.setMaximum(4)
+            self.progressMain.setMinimum(0)
+            self.progressMain.setMaximum(4)
 
             fh = open(self.pdfPath, "rb")
             pdfObj = PyPDF2.PdfFileReader(fh)
@@ -660,7 +665,7 @@ class OnMapLoader():
             except KeyError:
                 raise Exception(u"영상 레이어가 없어 가져올 수 없습니다.")
 
-            self.progress.setValue(1)
+            self.progressMain.setValue(1)
             self.info(u"영상 조각 추출중...")
             if self.forceStop:
                 raise StoppedByUserException()
@@ -769,7 +774,7 @@ class OnMapLoader():
 
             # 이미지를 ID 순으로 연결
             self.info(u"영상 병합 시작")
-            self.progress.setValue(2)
+            self.progressMain.setValue(2)
             self.info(u"영상 병합중...")
             if self.forceStop:
                 raise StoppedByUserException()
@@ -817,20 +822,28 @@ class OnMapLoader():
 
             images.clear()
 
-            self.info(u"병합된 영상을 지오패키지에 저장 시작")
-            self.progress.setValue(3)
-            self.info(u"병합된 영상 저장중...")
+            self.info(u"병합된 영상을 저장")
+            self.progressMain.setValue(3)
             if self.forceStop:
                 raise StoppedByUserException()
 
             self.progressSub.setMinimum(0)
             self.progressSub.setMaximum(5)
             self.progressSub.setValue(0)
-            self.info(u"영상 저장중...")
+            self.progText(u"정사영상 저장중...")
             if self.forceStop:
                 raise StoppedByUserException()
 
+            # TIFF 파일로 이미지 저장
+            root, ext = os.path.splitext(self.pdfPath)
+            outputFilePath = root + ".tif"
+            _, tempFilePath = tempfile.mkstemp(".tif")
+            mergedImage.save(tempFilePath)
+            del mergedImage
+
             # 좌표계 정보 생성
+            self.progressSub.setValue(1)
+            self.progText(u"좌표계 정보 생성중...")
             crs = osr.SpatialReference()
             crs.ImportFromEPSG(self.crsId)
             crs_wkt = crs.ExportToWkt()
@@ -849,61 +862,29 @@ class OnMapLoader():
                 self.imgBox[0], self.imgBox[1], self.imgBox[2], self.imgBox[3]
             )
 
-            driver = gdal.GetDriverByName("GPKG")
-            dataset = driver.Create(
-                self.gpkgPath,
-                mergedWidth,
-                mergedHeight,
-                3,
-                gdal.GDT_Byte,
-                options=["APPEND_SUBDATASET=YES", u"RASTER_TABLE=영상", "TILE_FORMAT=JPEG"]
-            )
-
-            dataset.SetProjection(crs_wkt)
-            xScale = math.sqrt(matrix[0][0] ** 2 + matrix[1][0] ** 2)
-            yScale = math.sqrt(matrix[0][1] ** 2 + matrix[1][1] ** 2)
-            dataset.SetGeoTransform((matrix[0][2], xScale, 0.0, matrix[1][2], 0.0, -yScale))
-
-            self.progressSub.setValue(1)
-            force_gui_update()
-            if self.forceStop:
-                raise StoppedByUserException()
-
-            # TODO: 이 다음 부분에서 메모리 오류가 있다.
-            band1 = np.array(list(mergedImage.getdata(0))).reshape(-1, mergedWidth)
+            # GeoTIFF 만들기
             self.progressSub.setValue(2)
-            force_gui_update()
-            if self.forceStop:
-                raise StoppedByUserException()
-            band2 = np.array(list(mergedImage.getdata(1))).reshape(-1, mergedWidth)
-            self.progressSub.setValue(3)
-            force_gui_update()
-            if self.forceStop:
-                raise StoppedByUserException()
-            band3 = np.array(list(mergedImage.getdata(2))).reshape(-1, mergedWidth)
-            self.progressSub.setValue(4)
-            force_gui_update()
-            if self.forceStop:
-                raise StoppedByUserException()
+            self.progText(u"GeoTIFF로 저장중...")
+            outImage = gdal.Open(tempFilePath)
+            driver = gdal.GetDriverByName('GTiff')
+            gtiff = driver.CreateCopy(outputFilePath, outImage)
+            gtiff.SetProjection(crs_wkt)
 
-            dataset.GetRasterBand(1).WriteArray(band1)
-            dataset.GetRasterBand(2).WriteArray(band2)
-            dataset.GetRasterBand(3).WriteArray(band3)
-            dataset.FlushCache()
-            # dataset.ReleaseResultSet(dataset)
+            # P1(C): x_origin,
+            # P2(A): cos(rotation) * x_pixel_size,
+            # P3(D): -sin(rotation) * x_pixel_size,
+            # P4(F): y_origin,
+            # P5(B): sin(rotation) * y_pixel_size,
+            # P6(E): cos(rotation) * y_pixel_size)
+            gtiff.SetGeoTransform((matrix[0][2], matrix[0][0], matrix[1][0], matrix[1][2], matrix[0][1], matrix[1][1]))
 
-            self.progressSub.setValue(5)
-            force_gui_update()
-            if self.forceStop:
-                raise StoppedByUserException()
+            # gtiff.close()
+            del gtiff
 
-            mergedImage.close()
-            del mergedImage
-            del band1
-            del band2
-            del band3
-            del dataset
-            self.progress.setValue(4)
+            rasterLayer = QgsRasterLayer(outputFilePath, u"영상")
+            QgsMapLayerRegistry.instance().addMapLayer(rasterLayer, False)
+            self.mainGroup.addLayer(rasterLayer)
+
             force_gui_update()
 
         except StoppedByUserException:
