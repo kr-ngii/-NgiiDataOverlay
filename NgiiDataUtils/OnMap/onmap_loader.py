@@ -11,6 +11,7 @@ import os
 from PIL import Image
 from io import BytesIO
 import tempfile
+import threading, time
 
 # import OGR
 from osgeo import ogr, gdal, osr
@@ -43,6 +44,34 @@ class StoppedByUserException(Exception):
     def __init__(self, message=""):
         # Call the base class constructor with the parameters it needs
         super(StoppedByUserException, self).__init__(message)
+
+#########################
+# CLASS for multitasking PDF Open
+#########################
+class PdfOpenThread(threading.Thread):
+    # pdf = srcDriver.Open(self.pdfPath, 0)
+    srcDriver = None
+    pdfPath = None
+    outPdf = None
+
+    def __init__(self, srcDriver, pdfPath):
+        self.srcDriver = srcDriver
+        self.pdfPath = pdfPath
+        threading.Thread.__init__(self)
+
+    def run(self):
+        self.outPdf = self.srcDriver.Open(self.pdfPath, 0)
+
+        return
+
+def threadExecutePdfOpen(cursor, sql, param=None):
+    dbt = PdfOpenThread(cursor, sql, param)
+    dbt.start()
+
+    while threading.activeCount() > 1:
+        QgsApplication.processEvents(QEventLoop.ExcludeUserInputEvents)
+        time.sleep(0.1)
+
 
 
 #########################
@@ -382,7 +411,16 @@ class OnMapLoader():
             srcDriver = ogr.GetDriverByName("PDF")
 
             # opening the PDF
-            pdf = srcDriver.Open(self.pdfPath, 0)
+            # pdf = srcDriver.Open(self.pdfPath, 0)
+            trd = PdfOpenThread(srcDriver, self.pdfPath)
+            trd.start()
+
+            while threading.activeCount() > 1:
+                force_gui_update()
+                time.sleep(0.1)
+
+            pdf = trd.outPdf
+
         except Exception, e:
             self.error(unicode(e))
             return
@@ -604,17 +642,6 @@ class OnMapLoader():
                         self.error(u"[ERROR] Unknown geometry type: " + geometry.GetGeometryName())
                         continue
 
-                    # featureDefn = vLayer.GetLayerDefn()
-                    # feature = ogr.Feature(featureDefn)
-                    # feature.SetField("GID", fid)
-                    #
-                    # # collect vertex
-                    # self._TransformGeom(geometry)
-                    # feature.SetGeometry(geometry)
-                    # vLayer.CreateFeature(feature)
-                    #
-                    # feature = None
-
                     geomWkb = geometry.ExportToWkb()
                     fid = ogrFeature.GetFID()
 
@@ -626,6 +653,7 @@ class OnMapLoader():
 
                     qgisFeature.setAttributes([fid])
                     vLayer.dataProvider().addFeatures([qgisFeature])
+            if subGroup is not None: subGroup.setExpanded(False)
 
             self.info(u"벡터 가져오기 완료")
         except StoppedByUserException:
