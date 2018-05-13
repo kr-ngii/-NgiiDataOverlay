@@ -291,6 +291,8 @@ class OnMapLoader():
     def appendGroupBox(self):
         self.iGroupBox += 1
         title, extension = os.path.splitext(os.path.basename(self.pdfPath))
+        self.info(self.pdfPath)
+        self.info(title)
 
         groupBox_1 = QGroupBox(self.scrollAreaWidgetContents)
         sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
@@ -348,9 +350,9 @@ class OnMapLoader():
         sldTrans_1.setObjectName("sldTrans_{}".format(self.iGroupBox))
         horLayout2_1.addWidget(sldTrans_1)
         gridLayout.addLayout(horLayout2_1, 1, 0, 1, 1)
-        self.gridLayout_2.addWidget(groupBox_1, 0, 0, 1, 1)
+        self.gridLayout_2.addWidget(groupBox_1, self.iGroupBox, 0, 1, 1)
 
-        groupBox_1.setTitle(u"[온맵](B090)온맵_37612068.pdf")
+        groupBox_1.setTitle(title)
         btnToSpWin_1.setText(u"분할창으로 띄우기")
         btnRemove_1.setText(u"제거")
         lblColor_1.setText(u"색  상:")
@@ -360,6 +362,7 @@ class OnMapLoader():
 
         groupBox = {
             "id": self.iGroupBox,
+            "type": "onmap",
             "title": title,
             "object": groupBox_1,
             "btnToSpWin": btnToSpWin_1,
