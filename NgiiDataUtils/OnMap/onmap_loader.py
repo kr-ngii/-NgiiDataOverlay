@@ -12,6 +12,7 @@ from PIL import Image
 from io import BytesIO
 import tempfile
 import threading, time
+from shutil import copyfile
 
 # import OGR
 from osgeo import ogr, gdal, osr
@@ -54,24 +55,15 @@ class PdfOpenThread(threading.Thread):
     pdfPath = None
     outPdf = None
 
-    def __init__(self, srcDriver, pdfPath):
-        self.srcDriver = srcDriver
+    def __init__(self,  pdfPath):
         self.pdfPath = pdfPath
         threading.Thread.__init__(self)
 
     def run(self):
-        self.outPdf = self.srcDriver.Open(self.pdfPath, 0)
+        srcDriver = ogr.GetDriverByName("PDF")
+        self.outPdf = srcDriver.Open(self.pdfPath, 0)
 
         return
-
-def threadExecutePdfOpen(cursor, sql, param=None):
-    dbt = PdfOpenThread(cursor, sql, param)
-    dbt.start()
-
-    while threading.activeCount() > 1:
-        QgsApplication.processEvents(QEventLoop.ExcludeUserInputEvents)
-        time.sleep(0.1)
-
 
 
 #########################
@@ -407,12 +399,9 @@ class OnMapLoader():
                 return
 
         try:
-            # get the driver
-            srcDriver = ogr.GetDriverByName("PDF")
-
             # opening the PDF
             # pdf = srcDriver.Open(self.pdfPath, 0)
-            trd = PdfOpenThread(srcDriver, self.pdfPath)
+            trd = PdfOpenThread(self.pdfPath)
             trd.start()
 
             while threading.activeCount() > 1:
@@ -904,7 +893,9 @@ class OnMapLoader():
             self.progText(u"GeoTIFF로 저장중...")
             outImage = gdal.Open(tempFilePath)
             driver = gdal.GetDriverByName('GTiff')
-            gtiff = driver.CreateCopy(outputFilePath, outImage)
+
+            _, tempGeoTiffFilePath = tempfile.mkstemp(".tif")
+            gtiff = driver.CreateCopy(tempGeoTiffFilePath, outImage)
             gtiff.SetProjection(crs_wkt)
 
             # P1(C): x_origin,
@@ -917,6 +908,19 @@ class OnMapLoader():
 
             # gtiff.close()
             del gtiff
+
+            # Temp 파일을 정식 이름으로 복사하여 오픈 시도
+            geotiffFiles = outputFilePath
+            try:
+                copyfile(tempGeoTiffFilePath, outputFilePath)
+            except:
+                geotiffFiles = tempGeoTiffFilePath
+
+            try:
+                os.remove(tempGeoTiffFilePath)
+            except:
+                pass
+
 
             rasterLayer = QgsRasterLayer(outputFilePath, u"영상")
             QgsMapLayerRegistry.instance().addMapLayer(rasterLayer, False)
