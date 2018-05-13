@@ -262,24 +262,32 @@ class OnMapLoader():
     # def __call__(self, *args, **kwargs):
     #     pass
 
-    def error(self, msg):
-        self.editLog.appendHtml(u'<font color="red"><b>{}</b></font>'.format(msg))
-
+    # 상태정보 표시
     def progText(self, text):
         self.lblStatus.setText(text)
+
+    #############################
+    # 로그 표시
+    def error(self, msg):
+        self.editLog.appendHtml(u'<font color="red"><b>{}</b></font>'.format(msg))
+        self.editLog.moveCursor(QTextCursor.End)
 
     def info(self, msg):
         if not self.enableInfo:
             return
         self.editLog.appendHtml(u'<font color="black">{}</font>'.format(msg))
+        self.editLog.moveCursor(QTextCursor.End)
 
     def debug(self, msg):
         if not self.enableDebug:
             return
         self.editLog.appendHtml(u'<font color="green">{}</font>'.format(msg))
+        self.editLog.moveCursor(QTextCursor.End)
 
     def command(self, msg):
         self.editLog.appendHtml(u'<font color="blue"><b>{}</b></font>'.format(msg))
+        self.editLog.moveCursor(QTextCursor.End)
+    #############################
 
     def runImport(self, filepath=PDF_FILE_NAME):
         self.pdfPath = filepath
@@ -310,8 +318,8 @@ class OnMapLoader():
             canvas.setExtent(canvas.mapSettings().fullExtent())
             canvas.refresh()
             self.info(u"온맵 불러오기 성공!")
-            self.progressSub.setValue(0)
             self.progressMain.setValue(0)
+            self.progressSub.setValue(0)
 
             self.isOnProcessing = False
 
@@ -508,7 +516,8 @@ class OnMapLoader():
             totalCount = len(self.layerInfoList)
             crrIndex = 0
             self.progressMain.setMinimum(0)
-            self.progressMain.setMaximum(totalCount)
+            self.progressMain.setMaximum(totalCount + 3)
+            self.progressMain.setValue(0)
 
             for layerInfo in self.layerInfoList:
                 vPointLayer = None
@@ -526,10 +535,12 @@ class OnMapLoader():
                 layerGroupSpilt = layerName.split(u"_")
                 if subGroupName != layerGroupSpilt[0]:
                     subGroupName = layerGroupSpilt[0]
+                    if subGroup:
+                        subGroup.setExpanded(False)
                     subGroup = self.mainGroup.addGroup(subGroupName)
 
                 crrIndex += 1
-                self.progressMain.setValue(crrIndex)
+                self.progressMain.setValue(self.progressMain.value() + 1)
                 self.progText(u"{} 레이어 처리중({}/{})...".format(layerName, crrIndex, totalCount))
 
                 # 선택된 레이어만 가져오기
@@ -652,8 +663,6 @@ class OnMapLoader():
         QgsApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             self.info(u"영상 정보 추출시작")
-            self.progressMain.setMinimum(0)
-            self.progressMain.setMaximum(4)
 
             fh = open(self.pdfPath, "rb")
             pdfObj = PyPDF2.PdfFileReader(fh)
@@ -665,7 +674,7 @@ class OnMapLoader():
             except KeyError:
                 raise Exception(u"영상 레이어가 없어 가져올 수 없습니다.")
 
-            self.progressMain.setValue(1)
+            self.progressMain.setValue(self.progressMain.value() + 1)
             self.info(u"영상 조각 추출중...")
             if self.forceStop:
                 raise StoppedByUserException()
@@ -774,7 +783,7 @@ class OnMapLoader():
 
             # 이미지를 ID 순으로 연결
             self.info(u"영상 병합 시작")
-            self.progressMain.setValue(2)
+            self.progressMain.setValue(self.progressMain.value() + 1)
             self.info(u"영상 병합중...")
             if self.forceStop:
                 raise StoppedByUserException()
@@ -823,7 +832,7 @@ class OnMapLoader():
             images.clear()
 
             self.info(u"병합된 영상을 저장")
-            self.progressMain.setValue(3)
+            self.progressMain.setValue(self.progressMain.value() + 1)
             if self.forceStop:
                 raise StoppedByUserException()
 
