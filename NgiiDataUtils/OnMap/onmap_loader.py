@@ -2,6 +2,7 @@
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
+from qgis.gui import QgsColorButton
 from qgis.core import *
 
 import re
@@ -295,6 +296,7 @@ class OnMapLoader():
         self.info(title)
 
         groupBox_1 = QGroupBox(self.scrollAreaWidgetContents)
+        groupBox_1.id = self.iGroupBox
         sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -326,7 +328,8 @@ class OnMapLoader():
         lblColor_1 = QLabel(groupBox_1)
         lblColor_1.setObjectName("lblColor_{}".format(self.iGroupBox))
         horLayout3_1.addWidget(lblColor_1)
-        btnSelColor_1 = QPushButton(groupBox_1)
+        # btnSelColor_1 = QPushButton(groupBox_1)
+        btnSelColor_1 = QgsColorButton(groupBox_1)
         btnSelColor_1.setObjectName("btnSelColor_{}".format(self.iGroupBox))
         horLayout3_1.addWidget(btnSelColor_1)
         btnResetColor_1 = QPushButton(groupBox_1)
@@ -356,7 +359,7 @@ class OnMapLoader():
         btnToSpWin_1.setText(u"분할창으로 띄우기")
         btnRemove_1.setText(u"제거")
         lblColor_1.setText(u"색  상:")
-        btnSelColor_1.setText(u"COLOR")
+        # btnSelColor_1.setText(u"COLOR")
         btnResetColor_1.setText(u"초기화")
         lblTrans_1.setText(u"투명도:")
 
@@ -364,7 +367,8 @@ class OnMapLoader():
             "id": self.iGroupBox,
             "type": "onmap",
             "title": title,
-            "object": groupBox_1,
+            "treeItem": self.mainGroup,
+            "groupBox": groupBox_1,
             "btnToSpWin": btnToSpWin_1,
             "btnRemove": btnRemove_1,
             "btnSelColor": btnSelColor_1,
@@ -372,11 +376,44 @@ class OnMapLoader():
             "sldTrans": sldTrans_1
         }
 
-        # self.groupBoxList[self.iGroupBox] = groupBox
-        pass
+        self.groupBoxList[self.iGroupBox] = groupBox
+
+        btnToSpWin_1.clicked.connect(lambda: self.onButton(btnToSpWin_1))
+        btnRemove_1.clicked.connect(lambda: self.onButton(btnRemove_1))
+        # btnSelColor_1.clicked.connect(lambda: self.onButton(btnSelColor_1))
+        btnSelColor_1.clicked.connect(lambda: self.onColor(btnSelColor_1))
+        btnSelColor_1.colorChanged.connect(lambda: self.onColorChanged(btnSelColor_1))
+        btnResetColor_1.clicked.connect(lambda: self.onButton(btnResetColor_1))
+        sldTrans_1.valueChanged.connect(lambda: self.onSlider(sldTrans_1))
+        # self.connect(self.sldTrans_1, SIGNAL("valueChanged()"), self.onSlider)
 
     def removeGroupBox(self):
         pass
+
+    def onButton(self, buttonObj):
+        id = buttonObj.parent().id
+        myTitle = buttonObj.text()
+        groupTitle = buttonObj.parent().title()
+        self.info(u"[{}] {} : {}".format(id, groupTitle, myTitle))
+
+    def onSlider(self, sliderObj):
+        value = sliderObj.value()
+        id = sliderObj.parent().id
+        myTitle = "slider"
+        groupTitle = sliderObj.parent().title()
+        self.info(u"[{}] {} : {}".format(id, groupTitle, value))
+
+    def onColor(self, buttonObj):
+        id = buttonObj.parent().id
+        myTitle = buttonObj.text()
+        groupTitle = buttonObj.parent().title()
+        self.info(u"[{}] {} : {}".format(id, groupTitle, myTitle))
+        rc = buttonObj.show()
+
+    def onColorChanged(self, buttonObj):
+        color = buttonObj.color()
+        self.info("COLOR: ")
+        self.info(str(buttonObj.color()))
 
     # 상태정보 표시
     def progText(self, text):
