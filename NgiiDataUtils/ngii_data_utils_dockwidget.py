@@ -34,10 +34,10 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'ngii_data_utils_dockwidget_base.ui'))
 
 
-# class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
-class NgiiDataUtilsDockWidget(QtGui.QDockWidget, Ui_NgiiDataUtilsDockWidgetBase):
+class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
+# class NgiiDataUtilsDockWidget(QtGui.QDockWidget, Ui_NgiiDataUtilsDockWidgetBase):
     closingPlugin = pyqtSignal()
-    OnMapLoader = None
+    _onMapLoader = None
 
     def __init__(self, iface, parent=None):
         """Constructor."""
@@ -46,6 +46,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, Ui_NgiiDataUtilsDockWidgetBase)
 
         self.iface = iface
         self._connect_action()
+        self._createLoader()
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
@@ -61,6 +62,9 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, Ui_NgiiDataUtilsDockWidgetBase)
         self.connect(self.btnLoadInternetBaseMap, SIGNAL("clicked()"), self._on_click_btnLoadInternetBaseMap)
         self.connect(self.btnReportError, SIGNAL("clicked()"), self._on_click_btnReportError)
 
+    def _createLoader(self):
+        self._onMapLoader = OnMapLoader(self.iface, self)
+
     def _on_click_btnAutoDetect(self):
         pass
 
@@ -73,7 +77,8 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, Ui_NgiiDataUtilsDockWidgetBase)
         filename, extension = os.path.splitext(vectorPath)
 
         if extension.lower() == ".pdf":
-            OnMapLoader.load(vectorPath, self.iface)
+            if self._onMapLoader:
+                self._onMapLoader.runImport(vectorPath)
         elif extension.lower() == ".dxf":
             DxfLoader.load(vectorPath)
 

@@ -15,74 +15,7 @@
   </property>
   <widget class="QWidget" name="dockWidgetContents">
    <layout class="QGridLayout" name="gridLayout_3">
-    <item row="5" column="0">
-     <widget class="QPushButton" name="btnLoadOnmapBaseMap">
-      <property name="text">
-       <string>온맵해당 국토기본정보 불러오기</string>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="0">
-     <widget class="QPushButton" name="btnLoadVector">
-      <property name="text">
-       <string>온맵/지형도/공공측량성과 불러오기</string>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="0">
-     <widget class="QPushButton" name="btnLoadTms">
-      <property name="text">
-       <string>국가 인터넷지도 불러오기</string>
-      </property>
-     </widget>
-    </item>
-    <item row="4" column="0">
-     <widget class="QPushButton" name="btnLoadBaseMap">
-      <property name="text">
-       <string>최신 국토기본정보(전레이어) 불러오기</string>
-      </property>
-     </widget>
-    </item>
     <item row="8" column="0">
-     <widget class="QProgressBar" name="prgMain">
-      <property name="minimumSize">
-       <size>
-        <width>0</width>
-        <height>5</height>
-       </size>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>16777215</width>
-        <height>5</height>
-       </size>
-      </property>
-      <property name="value">
-       <number>0</number>
-      </property>
-      <property name="textVisible">
-       <bool>false</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="0">
-     <widget class="QPushButton" name="btnAutoDetect">
-      <property name="text">
-       <string>변화내용 자동탐지</string>
-      </property>
-     </widget>
-    </item>
-    <item row="9" column="0">
-     <widget class="QLabel" name="lblStatus">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
-      <property name="text">
-       <string>진행상황 표시</string>
-      </property>
-     </widget>
-    </item>
-    <item row="7" column="0">
      <widget class="QProgressBar" name="prgSub">
       <property name="minimumSize">
        <size>
@@ -118,7 +51,71 @@
       </property>
      </widget>
     </item>
-    <item row="11" column="0">
+    <item row="5" column="0">
+     <widget class="QPushButton" name="btnLoadOnmapBaseMap">
+      <property name="text">
+       <string>온맵해당 국토기본정보 불러오기</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="0">
+     <widget class="QPushButton" name="btnLoadBaseMap">
+      <property name="text">
+       <string>최신 국토기본정보(전레이어) 불러오기</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QPushButton" name="btnLoadVector">
+      <property name="text">
+       <string>온맵/지형도/공공측량성과 불러오기</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0">
+     <widget class="QPushButton" name="btnLoadTms">
+      <property name="text">
+       <string>국가 인터넷지도 불러오기</string>
+      </property>
+     </widget>
+    </item>
+    <item row="9" column="0">
+     <widget class="QProgressBar" name="prgMain">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>5</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>5</height>
+       </size>
+      </property>
+      <property name="value">
+       <number>0</number>
+      </property>
+      <property name="textVisible">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="0">
+     <widget class="QPushButton" name="btnAutoDetect">
+      <property name="text">
+       <string>변화내용 자동탐지</string>
+      </property>
+     </widget>
+    </item>
+    <item row="13" column="0">
+     <widget class="QPushButton" name="btnReportError">
+      <property name="text">
+       <string>오류사항 기록</string>
+      </property>
+     </widget>
+    </item>
+    <item row="14" column="0">
      <widget class="QScrollArea" name="scrollArea">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -137,8 +134,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>218</width>
-         <height>297</height>
+         <width>213</width>
+         <height>266</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
@@ -396,10 +393,32 @@
       </widget>
      </widget>
     </item>
-    <item row="10" column="0">
-     <widget class="QPushButton" name="btnReportError">
+    <item row="12" column="0">
+     <widget class="QPlainTextEdit" name="editLog">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>50</height>
+       </size>
+      </property>
+      <property name="autoFillBackground">
+       <bool>false</bool>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+      <property name="backgroundVisible">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="11" column="0">
+     <widget class="QLabel" name="lblStatus">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="text">
-       <string>오류사항 기록</string>
+       <string>진행상황 표시</string>
       </property>
      </widget>
     </item>
