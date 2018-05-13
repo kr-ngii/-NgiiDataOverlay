@@ -547,12 +547,15 @@ class OnMapLoader():
             self.progressMain.setValue(0)
 
             for layerInfo in self.layerInfoList:
+                crrIndex += 1
+                self.progressMain.setValue(self.progressMain.value() + 1)
+
                 vPointLayer = None
                 vLineLayer = None
                 vPolygonLayer = None
-                layerName = layerInfo["name"]
 
                 # 지도정보_ 로 시작하는 레이만 처리
+                layerName = layerInfo["name"]
                 if not layerName.startswith(LAYER_FILTER):
                     continue
 
@@ -566,8 +569,6 @@ class OnMapLoader():
                         subGroup.setExpanded(False)
                     subGroup = self.mainGroup.addGroup(subGroupName)
 
-                crrIndex += 1
-                self.progressMain.setValue(self.progressMain.value() + 1)
                 self.progText(u"{} 레이어 처리중({}/{})...".format(layerName, crrIndex, totalCount))
 
                 # 선택된 레이어만 가져오기
