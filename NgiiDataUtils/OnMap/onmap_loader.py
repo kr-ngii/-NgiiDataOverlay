@@ -470,8 +470,6 @@ class OnMapLoader():
             canvas = self.iface.mapCanvas()
             canvas.setExtent(canvas.mapSettings().fullExtent())
 
-            self.addGroupBox(filepath)
-
             self.info(u"온맵 불러오기 성공!")
             self.progressMain.setValue(0)
             self.progressSub.setValue(0)

@@ -26,7 +26,7 @@ import os
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4 import QtGui, uic
-from ngii_data_utils_dockwidget_base import Ui_NgiiDataUtilsDockWidgetBase
+# from ngii_data_utils_dockwidget_base import Ui_NgiiDataUtilsDockWidgetBase
 from OnMap import OnMapLoader
 from Dxf import DxfLoader
 
@@ -70,7 +70,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
     def _on_click_btnLoadVector(self):
         # 기존 폴더 유지하게 옵션 추가: https://stackoverflow.com/questions/23002801/pyqt-how-to-make-getopenfilename-remember-last-opening-path
-        vectorPath = QFileDialog.getOpenFileName(caption=u"국토지리정보 벡터파일 선택", filter=u"온맵(*.pdf);;지형도(*.dxf);;공공측량성과(*.dxf)", options=QFileDialog.DontUseNativeDialog)
+        vectorPath = QFileDialog.getOpenFileName(caption=u"국토지리정보 벡터파일 선택", filter=u"국토지리정보 벡터파일(*.gpkg *.shp *.pdf *.dxf)", options=QFileDialog.DontUseNativeDialog)
         if vectorPath is None:
             return
 
@@ -79,6 +79,10 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         if extension.lower() == ".pdf":
             if self._onMapLoader:
                 self._onMapLoader.runImport(vectorPath)
+        elif extension.lower() == ".shp":
+            DxfLoader.load(vectorPath)
+        elif extension.lower() == ".pdf":
+            DxfLoader.load(vectorPath)
         elif extension.lower() == ".dxf":
             DxfLoader.load(vectorPath)
 
