@@ -4,7 +4,6 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from qgis.gui import QgsColorButton
 from qgis.core import *
-from PyQt4 import phonon
 
 import re
 import numpy as np
@@ -271,9 +270,6 @@ class OnMapLoader():
     isOnProcessing = False
     forceStop = False
 
-    enableDebug = False
-    enableInfo = True
-
     def __init__(self, iface, parent):
         """Constructor."""
         self.iface = iface
@@ -286,6 +282,11 @@ class OnMapLoader():
             self.editLog = parent.editLog
             self.scrollAreaWidgetContents = parent.scrollAreaWidgetContents
             self.gridLayout_2 = parent.gridLayout_2
+
+            self.info = parent.info
+            self.error = parent.error
+            self.debug = parent.debug
+            self.comment = parent.comment
         except:
             pass
 
@@ -332,16 +333,16 @@ class OnMapLoader():
         btnSelColor_1 = QgsColorButton(groupBox_1)
         btnSelColor_1.setObjectName("btnSelColor_{}".format(self.iGroupBox))
         horLayout3_1.addWidget(btnSelColor_1)
-        btnResetColor_1 = QPushButton(groupBox_1)
+        # btnResetColor_1 = QPushButton(groupBox_1)
         sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(btnResetColor_1.sizePolicy().hasHeightForWidth())
-        btnResetColor_1.setSizePolicy(sizePolicy)
-        btnResetColor_1.setMinimumSize(QSize(50, 0))
-        btnResetColor_1.setMaximumSize(QSize(50, 16777215))
-        btnResetColor_1.setObjectName("btnResetColor_{}".format(self.iGroupBox))
-        horLayout3_1.addWidget(btnResetColor_1)
+        # sizePolicy.setHeightForWidth(btnResetColor_1.sizePolicy().hasHeightForWidth())
+        # btnResetColor_1.setSizePolicy(sizePolicy)
+        # btnResetColor_1.setMinimumSize(QSize(50, 0))
+        # btnResetColor_1.setMaximumSize(QSize(50, 16777215))
+        # btnResetColor_1.setObjectName("btnResetColor_{}".format(self.iGroupBox))
+        # horLayout3_1.addWidget(btnResetColor_1)
         gridLayout.addLayout(horLayout3_1, 2, 0, 1, 1)
         horLayout2_1 = QHBoxLayout()
         horLayout2_1.setObjectName("horLayout2_{}".format(self.iGroupBox))
@@ -361,7 +362,7 @@ class OnMapLoader():
         btnRemove_1.setText(u"제거")
         lblColor_1.setText(u"색  상:")
         # btnSelColor_1.setText(u"COLOR")
-        btnResetColor_1.setText(u"초기화")
+        # btnResetColor_1.setText(u"초기화")
         lblTrans_1.setText(u"투명도:")
 
         groupBox = {
@@ -373,75 +374,27 @@ class OnMapLoader():
             "btnToSpWin": btnToSpWin_1,
             "btnRemove": btnRemove_1,
             "btnSelColor": btnSelColor_1,
-            "btnResetColor": btnResetColor_1,
+            # "btnResetColor": btnResetColor_1,
             "sldTrans": sldTrans_1
         }
 
         self.groupBoxList[self.iGroupBox] = groupBox
 
-        btnToSpWin_1.clicked.connect(lambda: self.onButton(btnToSpWin_1))
-        btnRemove_1.clicked.connect(lambda: self.onButton(btnRemove_1))
+        btnToSpWin_1.clicked.connect(lambda: self.parent.onButton(btnToSpWin_1))
+        btnRemove_1.clicked.connect(lambda: self.parent.onButton(btnRemove_1))
         # btnSelColor_1.clicked.connect(lambda: self.onButton(btnSelColor_1))
-        btnSelColor_1.clicked.connect(lambda: self.onColor(btnSelColor_1))
-        btnSelColor_1.colorChanged.connect(lambda: self.onColorChanged(btnSelColor_1))
-        btnResetColor_1.clicked.connect(lambda: self.onButton(btnResetColor_1))
-        sldTrans_1.valueChanged.connect(lambda: self.onSlider(sldTrans_1))
+        btnSelColor_1.clicked.connect(lambda: self.parent.onColor(btnSelColor_1))
+        btnSelColor_1.colorChanged.connect(lambda: self.parent.onColorChanged(btnSelColor_1))
+        # btnResetColor_1.clicked.connect(lambda: self.parent.onButton(btnResetColor_1))
+        sldTrans_1.valueChanged.connect(lambda: self.parent.onSlider(sldTrans_1))
         # self.connect(self.sldTrans_1, SIGNAL("valueChanged()"), self.onSlider)
 
     def removeGroupBox(self):
         pass
 
-    def onButton(self, buttonObj):
-        id = buttonObj.parent().id
-        myTitle = buttonObj.text()
-        groupTitle = buttonObj.parent().title()
-        self.info(u"[{}] {} : {}".format(id, groupTitle, myTitle))
-
-    def onSlider(self, sliderObj):
-        value = sliderObj.value()
-        id = sliderObj.parent().id
-        myTitle = "slider"
-        groupTitle = sliderObj.parent().title()
-        self.info(u"[{}] {} : {}".format(id, groupTitle, value))
-
-    def onColor(self, buttonObj):
-        id = buttonObj.parent().id
-        myTitle = buttonObj.text()
-        groupTitle = buttonObj.parent().title()
-        self.info(u"[{}] {} : {}".format(id, groupTitle, myTitle))
-        rc = buttonObj.show()
-
-    def onColorChanged(self, buttonObj):
-        color = buttonObj.color()
-        self.info("COLOR: ")
-        self.info(str(buttonObj.color()))
-
     # 상태정보 표시
     def progText(self, text):
         self.lblStatus.setText(text)
-
-    #############################
-    # 로그 표시
-    def error(self, msg):
-        self.editLog.appendHtml(u'<font color="red"><b>{}</b></font>'.format(msg))
-        self.editLog.moveCursor(QTextCursor.End)
-
-    def info(self, msg):
-        if not self.enableInfo:
-            return
-        self.editLog.appendHtml(u'<font color="black">{}</font>'.format(msg))
-        self.editLog.moveCursor(QTextCursor.End)
-
-    def debug(self, msg):
-        if not self.enableDebug:
-            return
-        self.editLog.appendHtml(u'<font color="green">{}</font>'.format(msg))
-        self.editLog.moveCursor(QTextCursor.End)
-
-    def command(self, msg):
-        self.editLog.appendHtml(u'<font color="blue"><b>{}</b></font>'.format(msg))
-        self.editLog.moveCursor(QTextCursor.End)
-    #############################
 
     def runImport(self, filepath=PDF_FILE_NAME):
         self.pdfPath = filepath

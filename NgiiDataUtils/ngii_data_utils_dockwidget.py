@@ -26,6 +26,7 @@ import os
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4 import QtGui, uic
+
 # from ngii_data_utils_dockwidget_base import Ui_NgiiDataUtilsDockWidgetBase
 from OnMap import OnMapLoader
 from Dxf import DxfLoader
@@ -38,6 +39,11 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 # class NgiiDataUtilsDockWidget(QtGui.QDockWidget, Ui_NgiiDataUtilsDockWidgetBase):
     closingPlugin = pyqtSignal()
     _onMapLoader = None
+
+    displayDebug = False
+    displayInfo = True
+    displayComment = True
+    displayError = True
 
     def __init__(self, iface, parent=None):
         """Constructor."""
@@ -86,7 +92,6 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         elif extension.lower() == ".dxf":
             DxfLoader.load(vectorPath)
 
-
     def _on_click_btnLoadImage(self):
         pass
 
@@ -102,5 +107,72 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
     def _on_click_btnLoadInternetBaseMap(self):
         pass
 
+    #############################
+    # 로그 표시
+    def error(self, msg):
+        if not self.displayError:
+            return
+        self.editLog.appendHtml(u'<font color="red"><b>{}</b></font>'.format(msg))
+        self.editLog.moveCursor(QTextCursor.End)
+
+    def info(self, msg):
+        if not self.displayInfo:
+            return
+        self.editLog.appendHtml(u'<font color="black">{}</font>'.format(msg))
+        self.editLog.moveCursor(QTextCursor.End)
+
+    def debug(self, msg):
+        if not self.displayDebug:
+            return
+        self.editLog.appendHtml(u'<font color="green">{}</font>'.format(msg))
+        self.editLog.moveCursor(QTextCursor.End)
+
+    def comment(self, msg):
+        if not self.displayComment:
+            return
+        self.editLog.appendHtml(u'<font color="blue"><b>{}</b></font>'.format(msg))
+        self.editLog.moveCursor(QTextCursor.End)
+    #############################
+
     def _on_click_btnReportError(self):
+        pass
+
+    def onButton(self, buttonObj):
+        id = buttonObj.parent().id
+        myTitle = buttonObj.text()
+        groupTitle = buttonObj.parent().title()
+        self.info(u"[{}] {} : {}".format(id, groupTitle, myTitle))
+
+    def onSlider(self, sliderObj):
+        value = sliderObj.value()
+        id = sliderObj.parent().id
+        myTitle = "slider"
+        groupTitle = sliderObj.parent().title()
+        self.info(u"[{}] {} : {}".format(id, groupTitle, value))
+
+    def onColor(self, buttonObj):
+        id = buttonObj.parent().id
+        myTitle = buttonObj.text()
+        groupTitle = buttonObj.parent().title()
+        self.info(u"[{}] {} : {}".format(id, groupTitle, myTitle))
+        rc = buttonObj.show()
+
+    def onColorChanged(self, buttonObj):
+        color = buttonObj.color()
+        self.info("COLOR: ")
+        self.info(str(buttonObj.color()))
+
+    def makeMirrorWindow(self):
+        from qgis import utils
+
+        try:
+            mirrorMapPlugin = utils.plugins['DockableMirrorMap']
+        except:
+            self.alert(u"Dockable MirrorMap을 설치 하셔야 동작 가능합니다.\n\n"
+                       u"QGIS의 [플러그인 - 플러그인 관리 및 설치] 메뉴로 플러그인 관리자를 실행해\n"
+                       u"Dockable MirrorMap 플러그인을 검색하시면 쉽게 설치하실 수 있습니다.")
+            return
+
+        mirrorMapPlugin.runDockableMirror()
+
         pass
