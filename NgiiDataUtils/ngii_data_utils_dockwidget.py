@@ -26,11 +26,13 @@ import os
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4 import QtGui, uic
+from qgis.gui import QgsColorButton
 
 # from ngii_data_utils_dockwidget_base import Ui_NgiiDataUtilsDockWidgetBase
 from OnMap import OnMapLoader
 from Dxf import DxfLoader
 from AutoDetect import AutoDetect
+
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'ngii_data_utils_dockwidget_base.ui'))
@@ -42,7 +44,11 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
     _onMapLoader = None
     _autoDetecter = None
 
-    displayDebug = True
+    iGroupBox = 0
+    groupBoxList = None
+    mainGroup = None
+
+    displayDebug = False
     displayInfo = True
     displayComment = True
     displayError = True
@@ -55,6 +61,8 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         self.iface = iface
         self._connect_action()
         self._createLoader()
+
+        self.groupBoxList = dict()
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
@@ -94,11 +102,11 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
             if self._onMapLoader:
                 self._onMapLoader.runImport(vectorPath)
         elif extension.lower() == ".shp":
-            DxfLoader.load(vectorPath)
+            pass
         elif extension.lower() == ".pdf":
-            DxfLoader.load(vectorPath)
+            pass
         elif extension.lower() == ".dxf":
-            DxfLoader.load(vectorPath)
+            pass
 
     def _on_click_btnLoadImage(self):
         pass
@@ -113,6 +121,9 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         pass
 
     def _on_click_btnLoadInternetBaseMap(self):
+        pass
+
+    def _on_click_btnReportError(self):
         pass
 
     #############################
@@ -140,29 +151,158 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
             return
         self.editLog.appendHtml(u'<font color="blue"><b>{}</b></font>'.format(msg))
         self.editLog.moveCursor(QTextCursor.End)
-    #############################
 
-    def _on_click_btnReportError(self):
-        pass
+    # 상태정보 표시
+    def progText(self, text):
+        self.lblStatus.setText(text)
+
+    @staticmethod
+    def alert(text, icon=QMessageBox.Information):
+        msg = QMessageBox()
+        msg.setIcon(icon)
+        msg.setText(text)
+        msg.setWindowTitle(u"국토기본정보 데이터 중첩검사 유틸")
+        msg.setStandardButtons(QMessageBox.Ok)
+
+        msg.exec_()
+
+    def appendGroupBox(self, pdfPath):
+        self.iGroupBox += 1
+        title, extension = os.path.splitext(os.path.basename(pdfPath))
+
+        groupBox_1 = QGroupBox(self.scrollAreaWidgetContents)
+        groupBox_1.id = self.iGroupBox
+        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(groupBox_1.sizePolicy().hasHeightForWidth())
+        groupBox_1.setSizePolicy(sizePolicy)
+        groupBox_1.setMaximumSize(QSize(16777215, 130))
+        groupBox_1.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        groupBox_1.setObjectName("groupBox_{}".format(self.iGroupBox))
+        gridLayout = QGridLayout(groupBox_1)
+        gridLayout.setObjectName("gridLayout")
+        horLayout1_1 = QHBoxLayout()
+        horLayout1_1.setObjectName("horLayout1_{}".format(self.iGroupBox))
+        btnToSpWin_1 = QPushButton(groupBox_1)
+        btnToSpWin_1.setObjectName("btnToSpWin_{}".format(self.iGroupBox))
+        horLayout1_1.addWidget(btnToSpWin_1)
+        btnRemove_1 = QPushButton(groupBox_1)
+        sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(btnRemove_1.sizePolicy().hasHeightForWidth())
+        btnRemove_1.setSizePolicy(sizePolicy)
+        btnRemove_1.setMinimumSize(QSize(30, 0))
+        btnRemove_1.setMaximumSize(QSize(30, 16777215))
+        btnRemove_1.setObjectName("btnRemove_{}".format(self.iGroupBox))
+        horLayout1_1.addWidget(btnRemove_1)
+        gridLayout.addLayout(horLayout1_1, 0, 0, 1, 1)
+        horLayout3_1 = QHBoxLayout()
+        horLayout3_1.setObjectName("horLayout3_{}".format(self.iGroupBox))
+        lblColor_1 = QLabel(groupBox_1)
+        lblColor_1.setObjectName("lblColor_{}".format(self.iGroupBox))
+        horLayout3_1.addWidget(lblColor_1)
+        # btnSelColor_1 = QPushButton(groupBox_1)
+        btnSelColor_1 = QgsColorButton(groupBox_1)
+        btnSelColor_1.setObjectName("btnSelColor_{}".format(self.iGroupBox))
+        horLayout3_1.addWidget(btnSelColor_1)
+        # btnResetColor_1 = QPushButton(groupBox_1)
+        # sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        # sizePolicy.setHorizontalStretch(0)
+        # sizePolicy.setVerticalStretch(0)
+        # sizePolicy.setHeightForWidth(btnResetColor_1.sizePolicy().hasHeightForWidth())
+        # btnResetColor_1.setSizePolicy(sizePolicy)
+        # btnResetColor_1.setMinimumSize(QSize(50, 0))
+        # btnResetColor_1.setMaximumSize(QSize(50, 16777215))
+        # btnResetColor_1.setObjectName("btnResetColor_{}".format(self.iGroupBox))
+        # horLayout3_1.addWidget(btnResetColor_1)
+        gridLayout.addLayout(horLayout3_1, 2, 0, 1, 1)
+        horLayout2_1 = QHBoxLayout()
+        horLayout2_1.setObjectName("horLayout2_{}".format(self.iGroupBox))
+        lblTrans_1 = QLabel(groupBox_1)
+        lblTrans_1.setObjectName("lblTrans_{}".format(self.iGroupBox))
+        horLayout2_1.addWidget(lblTrans_1)
+
+        sldTrans_1 = QSlider(groupBox_1)
+        sldTrans_1.setOrientation(Qt.Horizontal)
+        sldTrans_1.setObjectName("sldTrans_{}".format(self.iGroupBox))
+        horLayout2_1.addWidget(sldTrans_1)
+        gridLayout.addLayout(horLayout2_1, 1, 0, 1, 1)
+        self.gridLayout_2.addWidget(groupBox_1, self.iGroupBox, 0, 1, 1)
+
+        groupBox_1.setTitle(title)
+        btnToSpWin_1.setText(u"분할창으로 띄우기")
+        btnRemove_1.setText(u"제거")
+        lblColor_1.setText(u"색  상:")
+        # btnResetColor_1.setText(u"초기화")
+        lblTrans_1.setText(u"투명도:")
+
+        groupBox = {
+            "id": self.iGroupBox,
+            "type": "onmap",
+            "title": title,
+            "treeItem": self.mainGroup,
+            "groupBox": groupBox_1,
+            "btnToSpWin": btnToSpWin_1,
+            "btnRemove": btnRemove_1,
+            "btnSelColor": btnSelColor_1,
+            # "btnResetColor": btnResetColor_1,
+            "sldTrans": sldTrans_1
+        }
+
+        self.groupBoxList[self.iGroupBox] = groupBox
+
+        btnToSpWin_1.clicked.connect(lambda: self.onButton(btnToSpWin_1))
+        btnRemove_1.clicked.connect(lambda: self.onButton(btnRemove_1))
+        # btnSelColor_1.clicked.connect(lambda: self.onButton(btnSelColor_1))
+        btnSelColor_1.clicked.connect(lambda: self.onColor(btnSelColor_1))
+        btnSelColor_1.colorChanged.connect(lambda: self.onColorChanged(btnSelColor_1))
+        # btnResetColor_1.clicked.connect(lambda: self.onButton(btnResetColor_1))
+        sldTrans_1.valueChanged.connect(lambda: self.onSlider(sldTrans_1))
+
+        # self.connect(self.sldTrans_1, SIGNAL("valueChanged()"), self.onSlider)
+
+    @staticmethod
+    def removeGroupBox(groupObj):
+        treeNode = groupObj["treeItem"]
+        parentNode = treeNode.parent()
+        parentNode.removeChildNode(treeNode)
+
+        groupBox = groupObj["groupBox"]
+        groupBox.deleteLater()
 
     def onButton(self, buttonObj):
-        id = buttonObj.parent().id
-        myTitle = buttonObj.text()
-        groupTitle = buttonObj.parent().title()
-        self.info(u"[{}] {} : {}".format(id, groupTitle, myTitle))
+        try:
+            groupId = buttonObj.parent().id
+            buttonTitle = buttonObj.text()
+            groupTitle = buttonObj.parent().title()
+
+            try:
+                groupObj = self.groupBoxList[groupId]
+            except Exception as e:
+                raise e
+
+        except Exception as e:
+            raise e
+
+        if buttonTitle == u"제거":
+            self.removeGroupBox(groupObj)
+        else:
+            return
 
     def onSlider(self, sliderObj):
         value = sliderObj.value()
-        id = sliderObj.parent().id
+        groupId = sliderObj.parent().id
         myTitle = "slider"
         groupTitle = sliderObj.parent().title()
-        self.info(u"[{}] {} : {}".format(id, groupTitle, value))
+        self.info(u"[{}] {} : {}".format(groupId, groupTitle, value))
 
     def onColor(self, buttonObj):
-        id = buttonObj.parent().id
+        groupId = buttonObj.parent().id
         myTitle = buttonObj.text()
         groupTitle = buttonObj.parent().title()
-        self.info(u"[{}] {} : {}".format(id, groupTitle, myTitle))
+        self.info(u"[{}] {} : {}".format(groupId, groupTitle, myTitle))
         rc = buttonObj.show()
 
     def onColorChanged(self, buttonObj):
@@ -182,5 +322,3 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
             return
 
         mirrorMapPlugin.runDockableMirror()
-
-        pass
