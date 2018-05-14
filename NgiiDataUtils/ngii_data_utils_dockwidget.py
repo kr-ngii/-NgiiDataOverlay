@@ -27,6 +27,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4 import QtGui, uic
 from qgis.gui import QgsColorButton
+from qgis.core import *
 
 # from ngii_data_utils_dockwidget_base import Ui_NgiiDataUtilsDockWidgetBase
 from OnMap import OnMapLoader
@@ -62,61 +63,13 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
         self.groupBoxList = dict()
 
-    def closeEvent(self, event):
-        self.closingPlugin.emit()
-        event.accept()
-
-    def _connect_action(self):
-        self.connect(self.btnAutoDetect, SIGNAL("clicked()"), self._on_click_btnAutoDetect)
-        self.connect(self.btnLoadVector, SIGNAL("clicked()"), self._on_click_btnLoadVector)
-        self.connect(self.btnLoadImage, SIGNAL("clicked()"), self._on_click_btnLoadImage)
-        self.connect(self.btnLoadTms, SIGNAL("clicked()"), self._on_click_btnLoadTms)
-        self.connect(self.btnLoadBaseMap, SIGNAL("clicked()"), self._on_click_btnLoadBaseMap)
-        self.connect(self.btnLoadOnmapBaseMap, SIGNAL("clicked()"), self._on_click_btnLoadOnmapBaseMap)
-        self.connect(self.btnLoadInternetBaseMap, SIGNAL("clicked()"), self._on_click_btnLoadInternetBaseMap)
-        self.connect(self.btnReportError, SIGNAL("clicked()"), self._on_click_btnReportError)
-
     def _createLoader(self):
         self._onMapLoader = OnMapLoader(self.iface, self)
 
-    def _on_click_btnAutoDetect(self):
-        pass
-
-    def _on_click_btnLoadVector(self):
-        # 기존 폴더 유지하게 옵션 추가: https://stackoverflow.com/questions/23002801/pyqt-how-to-make-getopenfilename-remember-last-opening-path
-        vectorPath = QFileDialog.getOpenFileName(caption=u"국토지리정보 벡터파일 선택", filter=u"국토지리정보 벡터파일(*.gpkg *.shp *.pdf *.dxf)", options=QFileDialog.DontUseNativeDialog)
-        if vectorPath is None:
-            return
-
-        filename, extension = os.path.splitext(vectorPath)
-
-        if extension.lower() == ".pdf":
-            if self._onMapLoader:
-                self._onMapLoader.runImport(vectorPath)
-        elif extension.lower() == ".shp":
-            pass
-        elif extension.lower() == ".pdf":
-            pass
-        elif extension.lower() == ".dxf":
-            pass
-
-    def _on_click_btnLoadImage(self):
-        pass
-
-    def _on_click_btnLoadTms(self):
-        pass
-
-    def _on_click_btnLoadBaseMap(self):
-        pass
-
-    def _on_click_btnLoadOnmapBaseMap(self):
-        pass
-
-    def _on_click_btnLoadInternetBaseMap(self):
-        pass
-
-    def _on_click_btnReportError(self):
-        pass
+    # 독 윈도우 토글 처리
+    def closeEvent(self, event):
+        self.closingPlugin.emit()
+        event.accept()
 
     #############################
     # 로그 표시
@@ -148,6 +101,65 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
     def progText(self, text):
         self.lblStatus.setText(text)
 
+    def _connect_action(self):
+        self.connect(self.btnAutoDetect, SIGNAL("clicked()"), self._on_click_btnAutoDetect)
+        self.connect(self.btnLoadVector, SIGNAL("clicked()"), self._on_click_btnLoadVector)
+        self.connect(self.btnLoadImage, SIGNAL("clicked()"), self._on_click_btnLoadImage)
+        self.connect(self.btnLoadTms, SIGNAL("clicked()"), self._on_click_btnLoadTms)
+        self.connect(self.btnLoadBaseMap, SIGNAL("clicked()"), self._on_click_btnLoadBaseMap)
+        self.connect(self.btnLoadOnmapBaseMap, SIGNAL("clicked()"), self._on_click_btnLoadOnmapBaseMap)
+        self.connect(self.btnLoadInternetBaseMap, SIGNAL("clicked()"), self._on_click_btnLoadInternetBaseMap)
+        self.connect(self.btnReportError, SIGNAL("clicked()"), self._on_click_btnReportError)
+
+    def _on_click_btnAutoDetect(self):
+        pass
+
+    def _on_click_btnLoadVector(self):
+        # 기존 폴더 유지하게 옵션 추가: https://stackoverflow.com/questions/23002801/pyqt-how-to-make-getopenfilename-remember-last-opening-path
+        vectorPath = QFileDialog.getOpenFileName(caption=u"국토지리정보 벡터파일 선택", filter=u"국토지리정보 벡터파일(*.gpkg *.shp *.pdf *.dxf)", options=QFileDialog.DontUseNativeDialog)
+        if vectorPath is None:
+            return
+
+        filename, extension = os.path.splitext(vectorPath)
+
+        if extension.lower() == ".pdf":
+            if self._onMapLoader:
+                self._onMapLoader.runImport(vectorPath)
+        elif extension.lower() == ".shp":
+            pass
+        elif extension.lower() == ".pdf":
+            pass
+        elif extension.lower() == ".dxf":
+            pass
+
+    def _on_click_btnLoadImage(self):
+        rasterPath = QFileDialog.getOpenFileName(caption=u"국토지리정보 영상 파일 선택", filter=u"국토지리정보 영상 파일(*.img *.tif)", options=QFileDialog.DontUseNativeDialog)
+        if rasterPath is None:
+            return
+
+        filename, extension = os.path.splitext(rasterPath)
+
+        if extension.lower() == ".pdf":
+            if self._onMapLoader:
+                self._onMapLoader.runImport(rasterPath)
+        elif extension.lower() == ".shp":
+            pass
+
+    def _on_click_btnLoadTms(self):
+        pass
+
+    def _on_click_btnLoadBaseMap(self):
+        pass
+
+    def _on_click_btnLoadOnmapBaseMap(self):
+        pass
+
+    def _on_click_btnLoadInternetBaseMap(self):
+        pass
+
+    def _on_click_btnReportError(self):
+        pass
+
     @staticmethod
     def alert(text, icon=QMessageBox.Information):
         msg = QMessageBox()
@@ -159,6 +171,10 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         msg.exec_()
 
     def appendGroupBox(self, pdfPath):
+        spacerItem = self.gridLayout_2.itemAtPosition(self.iGroupBox, 0)
+        if spacerItem is not None:
+            self.gridLayout_2.removeItem(spacerItem)
+
         self.iGroupBox += 1
         title, extension = os.path.splitext(os.path.basename(pdfPath))
 
@@ -221,7 +237,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         sldTrans_1.setObjectName("sldTrans_{}".format(self.iGroupBox))
         horLayout2_1.addWidget(sldTrans_1)
         gridLayout.addLayout(horLayout2_1, 1, 0, 1, 1)
-        self.gridLayout_2.addWidget(groupBox_1, self.iGroupBox, 0, 1, 1)
+        self.gridLayout_2.addWidget(groupBox_1, self.iGroupBox - 1, 0, 1, 1)
 
         groupBox_1.setTitle(title)
         btnToSpWin_1.setText(u"분할창으로 띄우기")
@@ -251,9 +267,10 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         btnSelColor_1.clicked.connect(lambda: self.onColor(btnSelColor_1))
         btnSelColor_1.colorChanged.connect(lambda: self.onColorChanged(btnSelColor_1))
         # btnResetColor_1.clicked.connect(lambda: self.onButton(btnResetColor_1))
-        sldTrans_1.valueChanged.connect(lambda: self.onSlider(sldTrans_1))
+        sldTrans_1.sliderReleased.connect(lambda: self.onSliderReleased(sldTrans_1))
 
-        # self.connect(self.sldTrans_1, SIGNAL("valueChanged()"), self.onSlider)
+        spacerItem = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
+        self.gridLayout_2.addItem(spacerItem, self.iGroupBox, 0, 1, 1)
 
     @staticmethod
     def removeGroupBox(groupObj):
@@ -283,12 +300,22 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         else:
             return
 
-    def onSlider(self, sliderObj):
+    def onSliderReleased(self, sliderObj):
         value = sliderObj.value()
         groupId = sliderObj.parent().id
-        myTitle = "slider"
-        groupTitle = sliderObj.parent().title()
-        self.info(u"[{}] {} : {}".format(groupId, groupTitle, value))
+        groupObj = self.groupBoxList[groupId]
+
+        treeNode = groupObj["treeItem"]
+
+        for node in treeNode.children():
+            if node.nodeType() == QgsLayerTreeNode.NodeLayer:
+                layer = node.layer()
+                if layer.type() == 0:
+                    node.layer().setLayerTransparency(100 - value)
+                else:
+                    layer.renderer().setOpacity(1.0 - value * 0.01)
+
+                layer.triggerRepaint()
 
     def onColor(self, buttonObj):
         groupId = buttonObj.parent().id

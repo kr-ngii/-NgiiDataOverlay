@@ -442,6 +442,8 @@ class OnMapLoader():
 
                     qgisFeature.setAttributes([fid])
                     vLayer.dataProvider().addFeatures([qgisFeature])
+                    vLayer.triggerRepaint()
+
             if subGroup is not None: subGroup.setExpanded(False)
 
             self.info(u"벡터 가져오기 완료")

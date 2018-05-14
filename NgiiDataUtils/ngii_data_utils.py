@@ -134,7 +134,7 @@ class NgiiDataUtils:
         if self.mainMenu is not None:
             for action in self.menuActions:
                 self.mainMenu.removeAction(action)
-            print len(self.mainMenu.actions())
+            # print len(self.mainMenu.actions())
             if len(self.mainMenu.actions()) == 0:
                 self.mainMenu.deleteLater()
 
@@ -143,7 +143,7 @@ class NgiiDataUtils:
     def onClosePlugin(self):
         """Cleanup necessary items here when plugin dockwidget is closed"""
 
-        #print "** CLOSING NgiiDataUtils"
+        # print "** CLOSING NgiiDataUtils"
 
         # disconnects
         self.dockwidget.closingPlugin.disconnect(self.onClosePlugin)
@@ -168,7 +168,7 @@ class NgiiDataUtils:
         if not self.pluginIsActive:
             self.pluginIsActive = True
 
-            #print "** STARTING NgiiDataUtils"
+            # print "** STARTING NgiiDataUtils"
 
             # dockwidget may not exist if:
             #    first run of plugin
