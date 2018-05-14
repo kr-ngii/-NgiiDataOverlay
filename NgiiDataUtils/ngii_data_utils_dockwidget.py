@@ -32,6 +32,7 @@ from qgis.core import *
 # from ngii_data_utils_dockwidget_base import Ui_NgiiDataUtilsDockWidgetBase
 from OnMap import OnMapLoader
 from Dxf import DxfLoader
+from AutoDetect import AutoDetect
 
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
@@ -42,6 +43,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 # class NgiiDataUtilsDockWidget(QtGui.QDockWidget, Ui_NgiiDataUtilsDockWidgetBase):
     closingPlugin = pyqtSignal()
     _onMapLoader = None
+    _autoDetecter = None
 
     iGroupBox = 0
     groupBoxList = None
@@ -62,9 +64,6 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         self._createLoader()
 
         self.groupBoxList = dict()
-
-    def _createLoader(self):
-        self._onMapLoader = OnMapLoader(self.iface, self)
 
     # 독 윈도우 토글 처리
     def closeEvent(self, event):
@@ -111,8 +110,17 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         self.connect(self.btnLoadInternetBaseMap, SIGNAL("clicked()"), self._on_click_btnLoadInternetBaseMap)
         self.connect(self.btnReportError, SIGNAL("clicked()"), self._on_click_btnReportError)
 
+    def _createLoader(self):
+        self._onMapLoader = OnMapLoader(self.iface, self)
+        self._autoDetecter = AutoDetect(self.iface, self)
+
     def _on_click_btnAutoDetect(self):
-        pass
+        res = self._autoDetecter.checkEnv()
+        if not res:
+            return
+
+        self._autoDetecter.connectPg()
+        self._autoDetecter.show()
 
     def _on_click_btnLoadVector(self):
         # 기존 폴더 유지하게 옵션 추가: https://stackoverflow.com/questions/23002801/pyqt-how-to-make-getopenfilename-remember-last-opening-path
