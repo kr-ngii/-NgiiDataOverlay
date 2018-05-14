@@ -158,103 +158,6 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
         msg.exec_()
 
-    #############################
-
-    # def appendGroupBox(self, pdfPath):
-    #     self.iGroupBox += 1
-    #     title, extension = os.path.splitext(os.path.basename(pdfPath))
-    #
-    #     groupBox_1 = QGroupBox(self.scrollAreaWidgetContents)
-    #     groupBox_1.id = self.iGroupBox
-    #     sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-    #     sizePolicy.setHorizontalStretch(0)
-    #     sizePolicy.setVerticalStretch(0)
-    #     sizePolicy.setHeightForWidth(groupBox_1.sizePolicy().hasHeightForWidth())
-    #     groupBox_1.setSizePolicy(sizePolicy)
-    #     groupBox_1.setMaximumSize(QSize(16777215, 130))
-    #     groupBox_1.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
-    #     groupBox_1.setObjectName("groupBox_{}".format(self.iGroupBox))
-    #     gridLayout = QGridLayout(groupBox_1)
-    #     gridLayout.setObjectName("gridLayout")
-    #     horLayout1_1 = QHBoxLayout()
-    #     horLayout1_1.setObjectName("horLayout1_{}".format(self.iGroupBox))
-    #     btnToSpWin_1 = QPushButton(groupBox_1)
-    #     btnToSpWin_1.setObjectName("btnToSpWin_{}".format(self.iGroupBox))
-    #     horLayout1_1.addWidget(btnToSpWin_1)
-    #     btnRemove_1 = QPushButton(groupBox_1)
-    #     sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-    #     sizePolicy.setHorizontalStretch(0)
-    #     sizePolicy.setVerticalStretch(0)
-    #     sizePolicy.setHeightForWidth(btnRemove_1.sizePolicy().hasHeightForWidth())
-    #     btnRemove_1.setSizePolicy(sizePolicy)
-    #     btnRemove_1.setMinimumSize(QSize(30, 0))
-    #     btnRemove_1.setMaximumSize(QSize(30, 16777215))
-    #     btnRemove_1.setObjectName("btnRemove_{}".format(self.iGroupBox))
-    #     horLayout1_1.addWidget(btnRemove_1)
-    #     gridLayout.addLayout(horLayout1_1, 0, 0, 1, 1)
-    #     horLayout3_1 = QHBoxLayout()
-    #     horLayout3_1.setObjectName("horLayout3_{}".format(self.iGroupBox))
-    #     lblColor_1 = QLabel(groupBox_1)
-    #     lblColor_1.setObjectName("lblColor_{}".format(self.iGroupBox))
-    #     horLayout3_1.addWidget(lblColor_1)
-    #     btnSelColor_1 = QPushButton(groupBox_1)
-    #     btnSelColor_1 = QgsColorButton(groupBox_1)
-    #     btnSelColor_1.setObjectName("btnSelColor_{}".format(self.iGroupBox))
-    #     horLayout3_1.addWidget(btnSelColor_1)
-    #     # -----------------------------------------------
-    #     btnResetColor_1 = QPushButton(groupBox_1)
-    #     sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-    #     sizePolicy.setHorizontalStretch(0)
-    #     sizePolicy.setVerticalStretch(0)
-    #     sizePolicy.setHeightForWidth(btnResetColor_1.sizePolicy().hasHeightForWidth())
-    #     btnResetColor_1.setSizePolicy(sizePolicy)
-    #     btnResetColor_1.setMinimumSize(QSize(50, 0))
-    #     btnResetColor_1.setMaximumSize(QSize(50, 16777215))
-    #     btnResetColor_1.setObjectName("btnResetColor_{}".format(self.iGroupBox))
-    #     horLayout3_1.addWidget(btnResetColor_1)
-    #     # ------------------------------------------------
-    #     gridLayout.addLayout(horLayout3_1, 2, 0, 1, 1)
-    #     horLayout2_1 = QHBoxLayout()
-    #     horLayout2_1.setObjectName("horLayout2_{}".format(self.iGroupBox))
-    #     lblTrans_1 = QLabel(groupBox_1)
-    #     lblTrans_1.setObjectName("lblTrans_{}".format(self.iGroupBox))
-    #     horLayout2_1.addWidget(lblTrans_1)
-    #
-    #     sldTrans_1 = QSlider(groupBox_1)
-    #     sldTrans_1.setOrientation(Qt.Horizontal)
-    #     sldTrans_1.setObjectName("sldTrans_{}".format(self.iGroupBox))
-    #     horLayout2_1.addWidget(sldTrans_1)
-    #     gridLayout.addLayout(horLayout2_1, 1, 0, 1, 1)
-    #     self.gridLayout_2.addWidget(groupBox_1, self.iGroupBox, 0, 1, 1)
-    #
-    #     groupBox_1.setTitle(title)
-    #     btnToSpWin_1.setText(u"분할창으로 띄우기")
-    #     btnRemove_1.setText(u"제거")
-    #     lblColor_1.setText(u"색  상:")
-    #     # btnResetColor_1.setText(u"초기화")
-    #     lblTrans_1.setText(u"투명도:")
-    #
-    #     groupBox = {
-    #         "id": self.iGroupBox,
-    #         "type": "onmap",
-    #         "title": title,
-    #         "treeItem": self.mainGroup,
-    #         "groupBox": groupBox_1,
-    #         "btnToSpWin": btnToSpWin_1,
-    #         "btnRemove": btnRemove_1,
-    #         "btnSelColor": btnSelColor_1,
-    #         # "btnResetColor": btnResetColor_1,
-    #         "sldTrans": sldTrans_1
-    #     }
-    #
-    #     self.groupBoxList[self.iGroupBox] = groupBox
-    #
-    #     btnToSpWin_1.clicked.connect(lambda: self.onButton(btnToSpWin_1))
-    #     btnRemove_1.clicked.connect(lambda: self.onButton(btnRemove_1))
-    #     btnSelColor_1.clicked.connect(lambda: self.onColor(btnSelColor_1))
-    #     btnSelColor_1.colorChanged.connect(lambda: self.onColorChanged(btnSelColor_1))
-    #     btnResetColor_1.clicked.connect(lambda: self.onButton(btnResetColor_1))
-    #     sldTrans_1.valueChanged.connect(lambda: self.onSlider(sldTrans_1))
     def appendGroupBox(self, pdfPath):
         self.iGroupBox += 1
         title, extension = os.path.splitext(os.path.basename(pdfPath))
@@ -352,8 +255,14 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
         # self.connect(self.sldTrans_1, SIGNAL("valueChanged()"), self.onSlider)
 
-    def removeGroupBox(self):
-        pass
+    @staticmethod
+    def removeGroupBox(groupObj):
+        treeNode = groupObj["treeItem"]
+        parentNode = treeNode.parent()
+        parentNode.removeChildNode(treeNode)
+
+        groupBox = groupObj["groupBox"]
+        groupBox.deleteLater()
 
     def onButton(self, buttonObj):
         try:
@@ -363,13 +272,14 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
             try:
                 groupObj = self.groupBoxList[groupId]
-            except:
-                return
-        except:
-            return
+            except Exception as e:
+                raise e
+
+        except Exception as e:
+            raise e
 
         if buttonTitle == u"제거":
-            self.alert(groupTitle)
+            self.removeGroupBox(groupObj)
         else:
             return
 
