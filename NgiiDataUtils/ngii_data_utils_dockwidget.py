@@ -30,6 +30,7 @@ from PyQt4 import QtGui, uic
 # from ngii_data_utils_dockwidget_base import Ui_NgiiDataUtilsDockWidgetBase
 from OnMap import OnMapLoader
 from Dxf import DxfLoader
+from AutoDetect import AutoDetect
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'ngii_data_utils_dockwidget_base.ui'))
@@ -39,8 +40,9 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 # class NgiiDataUtilsDockWidget(QtGui.QDockWidget, Ui_NgiiDataUtilsDockWidgetBase):
     closingPlugin = pyqtSignal()
     _onMapLoader = None
+    _autoDetecter = None
 
-    displayDebug = False
+    displayDebug = True
     displayInfo = True
     displayComment = True
     displayError = True
@@ -70,9 +72,15 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
     def _createLoader(self):
         self._onMapLoader = OnMapLoader(self.iface, self)
+        self._autoDetecter = AutoDetect(self.iface, self)
 
     def _on_click_btnAutoDetect(self):
-        pass
+        res = self._autoDetecter.checkEnv()
+        if not res:
+            return
+
+        self._autoDetecter.connectPg()
+        self._autoDetecter.show()
 
     def _on_click_btnLoadVector(self):
         # 기존 폴더 유지하게 옵션 추가: https://stackoverflow.com/questions/23002801/pyqt-how-to-make-getopenfilename-remember-last-opening-path
