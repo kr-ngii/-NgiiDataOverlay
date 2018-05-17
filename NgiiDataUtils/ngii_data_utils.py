@@ -61,6 +61,19 @@ class NgiiDataUtils:
         self.pluginIsActive = False
         self.dockwidget = None
 
+        self.connectRemoteDebugger()
+
+    @staticmethod
+    def connectRemoteDebugger():
+        try:
+            import pydevd
+            pydevd.settrace('localhost',
+                            port=9999,
+                            stdoutToServer=True,
+                            stderrToServer=True)
+        except Exception as e:
+            print e
+
     def initGui(self):
         # 메뉴와 툴바에 추가할 항목 정의
         menuIcons = ['icon.png']

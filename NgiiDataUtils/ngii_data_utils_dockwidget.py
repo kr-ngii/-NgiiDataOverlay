@@ -31,25 +31,32 @@ from qgis.core import *
 
 # from ngii_data_utils_dockwidget_base import Ui_NgiiDataUtilsDockWidgetBase
 from OnMap import OnMapLoader
+from Shp import ShpLoader
+from Gpkg import GpkgLoader
 from Dxf import DxfLoader
-from AutoDetect import AutoDetect
 
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'ngii_data_utils_dockwidget_base.ui'))
 
 
-class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 # class NgiiDataUtilsDockWidget(QtGui.QDockWidget, Ui_NgiiDataUtilsDockWidgetBase):
+class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
     closingPlugin = pyqtSignal()
+
     _onMapLoader = None
-    _autoDetecter = None
+    _shpLoader = None
+    _gpkgLoader = None
+    _dxfLoader = None
+
+    _orgColor = None
+    _last_opened_folder = None
 
     iGroupBox = 0
     groupBoxList = None
     mainGroup = None
 
-    displayDebug = False
+    displayDebug = True
     displayInfo = True
     displayComment = True
     displayError = True
@@ -100,6 +107,16 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
     def progText(self, text):
         self.lblStatus.setText(text)
 
+    @staticmethod
+    def alert(text, icon=QMessageBox.Information):
+        msg = QMessageBox()
+        msg.setIcon(icon)
+        msg.setText(text)
+        msg.setWindowTitle(u"국토기본정보 데이터 중첩검사 유틸")
+        msg.setStandardButtons(QMessageBox.Ok)
+
+        msg.exec_()
+
     def _connect_action(self):
         self.connect(self.btnAutoDetect, SIGNAL("clicked()"), self._on_click_btnAutoDetect)
         self.connect(self.btnLoadVector, SIGNAL("clicked()"), self._on_click_btnLoadVector)
@@ -112,7 +129,9 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
     def _createLoader(self):
         self._onMapLoader = OnMapLoader(self.iface, self)
-        self._autoDetecter = AutoDetect(self.iface, self)
+        self._shpLoader = ShpLoader(self.iface, self)
+        self._gpkgLoader = GpkgLoader(self.iface, self)
+        self._dxfLoader = DxfLoader(self.iface, self)
 
     def _on_click_btnAutoDetect(self):
         res = self._autoDetecter.checkEnv()
@@ -124,21 +143,63 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
     def _on_click_btnLoadVector(self):
         # 기존 폴더 유지하게 옵션 추가: https://stackoverflow.com/questions/23002801/pyqt-how-to-make-getopenfilename-remember-last-opening-path
-        vectorPath = QFileDialog.getOpenFileName(caption=u"국토지리정보 벡터파일 선택", filter=u"국토지리정보 벡터파일(*.gpkg *.shp *.pdf *.dxf)", options=QFileDialog.DontUseNativeDialog)
-        if vectorPath is None:
-            return
+        # vectorPath = QFileDialog.getOpenFileName(caption=u"국토지리정보 벡터파일 선택",
+        #                                          filter=u"국토지리정보 벡터파일(*.gpkg *.shp *.pdf *.dxf)",
+        #                                          options=QFileDialog.DontUseNativeDialog,
+        #                                          fileMode=QFileDialog.ExistingFiles)
+        # if vectorPath is None:
+        #     return
+        dialog = QtGui.QFileDialog(self)
+        dialog.setFileMode(QtGui.QFileDialog.ExistingFiles)
 
-        filename, extension = os.path.splitext(vectorPath)
+        if self._last_opened_folder is not None:
+            dialog.setDirectory(self._last_opened_folder)
+        # dialog.setFileMode(QtGui.QFileDialog.Directory )
 
-        if extension.lower() == ".pdf":
-            if self._onMapLoader:
+        filters = ["국토지리정보 벡터파일(*.gpkg *.shp *.pdf *.dxf)"]
+        dialog.setNameFilters(filters)
+
+        if (dialog.exec_()):
+            fileList = dialog.selectedFiles()
+            # if self.dirtyFlagVerification( "Open Archive",
+            #							"If you open a new archive now, data in the form will be lost.  Are you sure?"):
+            self.fileSelectionList.addPathList(fileList)
+
+        pdfList = list()
+        shpList = list()
+        gpkgList = list()
+        dxfList = list()
+
+        for vectorPath in fileList:
+            filename, extension = os.path.splitext(vectorPath)
+
+            if extension.lower() == ".pdf":
+                pdfList.append(vectorPath)
+            elif extension.lower() == ".shp":
+                shpList.append(vectorPath)
+            elif extension.lower() == ".gpkg":
+                gpkgList.append(vectorPath)
+            elif extension.lower() == ".dxf":
+                dxfList.append(vectorPath)
+
+        # 온맵은 한 파일씩 그룹으로 임포트
+        if self._onMapLoader:
+            for vectorPath in pdfList:
                 self._onMapLoader.runImport(vectorPath)
-        elif extension.lower() == ".shp":
-            pass
-        elif extension.lower() == ".pdf":
-            pass
-        elif extension.lower() == ".dxf":
-            pass
+
+        # Shp의 경우 여러 파일을 하나의 그룹으로 묵어 임포트
+        if self._shpLoader:
+            self._shpLoader.runImport(shpList)
+
+        # Gpkg 한 파일씩 그룹으로 임포트
+        if self._gpkgLoader:
+            for vectorPath in gpkgList:
+                self._gpkgLoader.runImport(vectorPath)
+
+        # DXF 한 파일씩 그룹으로 임포트
+        if self._dxfLoader:
+            for vectorPath in dxfList:
+                self._dxfLoader.runImport(vectorPath)
 
     def _on_click_btnLoadImage(self):
         rasterPath = QFileDialog.getOpenFileName(caption=u"국토지리정보 영상 파일 선택", filter=u"국토지리정보 영상 파일(*.img *.tif)", options=QFileDialog.DontUseNativeDialog)
@@ -167,16 +228,6 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
     def _on_click_btnReportError(self):
         pass
-
-    @staticmethod
-    def alert(text, icon=QMessageBox.Information):
-        msg = QMessageBox()
-        msg.setIcon(icon)
-        msg.setText(text)
-        msg.setWindowTitle(u"국토기본정보 데이터 중첩검사 유틸")
-        msg.setStandardButtons(QMessageBox.Ok)
-
-        msg.exec_()
 
     def appendGroupBox(self, pdfPath):
         spacerItem = self.gridLayout_2.itemAtPosition(self.iGroupBox, 0)
@@ -318,24 +369,62 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         for node in treeNode.children():
             if node.nodeType() == QgsLayerTreeNode.NodeLayer:
                 layer = node.layer()
-                if layer.type() == 0:
-                    node.layer().setLayerTransparency(100 - value)
-                else:
+                if layer.type() == 0:  # QgsVectorLayer
+                    layer.setLayerTransparency(100 - value)
+                else:  # QgsRasterLayer
                     layer.renderer().setOpacity(1.0 - value * 0.01)
 
                 layer.triggerRepaint()
 
     def onColor(self, buttonObj):
-        groupId = buttonObj.parent().id
-        myTitle = buttonObj.text()
-        groupTitle = buttonObj.parent().title()
-        self.info(u"[{}] {} : {}".format(groupId, groupTitle, myTitle))
-        rc = buttonObj.show()
+        self._orgColor = buttonObj.color()
+        buttonObj.show()
 
     def onColorChanged(self, buttonObj):
-        color = buttonObj.color()
-        self.info("COLOR: ")
-        self.info(str(buttonObj.color()))
+        newColor = buttonObj.color()
+        if self._orgColor == newColor:
+            return
+        self.error("ENTER")
+
+        colorText = "{},{},{}".format(newColor.red, newColor.green, newColor.blue)
+
+        groupId = buttonObj.parent().id
+        groupObj = self.groupBoxList[groupId]
+
+        treeNode = groupObj["treeItem"]
+
+        for node in treeNode.children():
+            if node.nodeType() == QgsLayerTreeNode.NodeLayer:
+                layer = node.layer()
+                self.debug(str(layer))
+                self.debug(str(layer.type()))
+                if layer.type() == QgsMapLayer.VectorLayer:  # QgsVectorLayer
+                    geomType = layer.geometryType()
+                    if geomType == QGis.Point:
+                        self.debug("point")
+                        symbol = QgsMarkerSymbolV2().createSimple({'color': colorText, 'name': 'square'})
+                    elif geomType == QGis.Line:
+                        self.debug("line")
+                        symbol = QgsLineSymbolV2().createSimple({'color': colorText})
+                    elif geomType == QGis.Polygon:
+                        self.debug("poly")
+                        symbol = QgsFillSymbolV2().createSimple({'color': colorText, 'style_border':'no', 'style': 'solid'})
+                    else:
+                        continue
+
+                    ddp = QgsDataDefined(True, True, "@symbol_color")
+                    symbol.symbolLayer(0).setDataDefinedProperty("color_border", ddp)
+                    renderer = QgsRuleBasedRendererV2(symbol)
+                    root_rule = renderer.rootRule()
+
+                    rule = root_rule.children()[0].clone()
+                    rule.symbol().setColor(newColor)
+                    root_rule.appendChild(rule)
+
+                    root_rule.removeChildAt(0)
+                    layer.setRendererV2(renderer)
+                    layer.triggerRepaint()
+                self.debug("end")
 
     def makeMirrorWindow(self):
         from qgis import utils

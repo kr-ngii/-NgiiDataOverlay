@@ -1,1 +1,1 @@
-from .onmap_loader import OnMapLoader
+from onmap_loader import OnMapLoader

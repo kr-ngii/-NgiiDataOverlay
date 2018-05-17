@@ -127,7 +127,8 @@ class OnMapLoader():
             if self.forceStop:
                 raise StoppedByUserException()
 
-            self.importPdfRaster()
+            # TEST
+            # self.importPdfRaster()
             if self.forceStop:
                 raise StoppedByUserException()
 
