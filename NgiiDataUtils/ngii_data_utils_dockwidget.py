@@ -161,9 +161,8 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
         if (dialog.exec_()):
             fileList = dialog.selectedFiles()
-            # if self.dirtyFlagVerification( "Open Archive",
-            #							"If you open a new archive now, data in the form will be lost.  Are you sure?"):
-            self.fileSelectionList.addPathList(fileList)
+        else:
+            return
 
         pdfList = list()
         shpList = list()

@@ -2,5 +2,9 @@
 
 
 class DxfLoader():
-    def __init__(self):
-        pass
+    iface = None
+    parent = None
+
+    def __init__(self, iface, parent):
+        self.iface
+        self.parent

@@ -443,7 +443,7 @@ class OnMapLoader():
 
                     qgisFeature.setAttributes([fid])
                     vLayer.dataProvider().addFeatures([qgisFeature])
-                    vLayer.triggerRepaint()
+                vLayer.triggerRepaint()
 
             if subGroup is not None: subGroup.setExpanded(False)
 
