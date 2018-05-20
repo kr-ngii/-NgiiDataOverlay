@@ -7,9 +7,9 @@
 # This file should be included when you package your plugin.# Mandatory items:
 
 [general]
-name=NGII Data Utils
+name=NGII Data Overlay Quality Check
 qgisMinimumVersion=2.14
-description=국토지리정보원 데이터 사용지원 툴
+description=국토지리정보원 데이터 중첩검사 툴
 version=0.1
 author=NGII
 email=jangbi882@gmail.com
