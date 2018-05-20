@@ -61,7 +61,7 @@ class NgiiDataUtils:
         self.pluginIsActive = False
         self.dockwidget = None
 
-        self.connectRemoteDebugger()
+        # self.connectRemoteDebugger()
 
     @staticmethod
     def connectRemoteDebugger():

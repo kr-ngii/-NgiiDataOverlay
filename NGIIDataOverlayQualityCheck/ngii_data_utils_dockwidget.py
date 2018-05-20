@@ -156,7 +156,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
             dialog.setDirectory(self._last_opened_folder)
         # dialog.setFileMode(QtGui.QFileDialog.Directory )
 
-        filters = ["국토지리정보 벡터파일(*.gpkg *.shp *.pdf *.dxf)"]
+        filters = [u"국토지리정보 벡터파일(*.gpkg *.shp *.pdf *.dxf)"]
         dialog.setNameFilters(filters)
 
         if (dialog.exec_()):
@@ -228,13 +228,17 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
     def _on_click_btnReportError(self):
         pass
 
-    def appendGroupBox(self, pdfPath):
+    def appendGroupBox(self):
+        if self.mainGroup is not None:
+            title = self.mainGroup.name()
+        else:
+            raise Exception("manGroup not defined")
+
         spacerItem = self.gridLayout_2.itemAtPosition(self.iGroupBox, 0)
         if spacerItem is not None:
             self.gridLayout_2.removeItem(spacerItem)
 
         self.iGroupBox += 1
-        title, extension = os.path.splitext(os.path.basename(pdfPath))
 
         groupBox_1 = QGroupBox(self.scrollAreaWidgetContents)
         groupBox_1.id = self.iGroupBox
