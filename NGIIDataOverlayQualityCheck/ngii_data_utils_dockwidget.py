@@ -72,6 +72,19 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
         self.groupBoxList = dict()
 
+    def connectRemoteDebugger(self):
+        try:
+            import pydevd
+
+            self.alert(u"곧 Debugger 가 연결됩니다. \nPyCharm의 Debug 탭에서 [플래이] 버튼을 누르세요.")
+
+            pydevd.settrace('localhost',
+                            port=9999,
+                            stdoutToServer=True,
+                            stderrToServer=True)
+        except Exception as e:
+            print e
+
     # 독 윈도우 토글 처리
     def closeEvent(self, event):
         self.closingPlugin.emit()
@@ -226,6 +239,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         pass
 
     def _on_click_btnReportError(self):
+        self.connectRemoteDebugger()
         pass
 
     def appendGroupBox(self):
@@ -297,6 +311,8 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         sldTrans_1 = QSlider(groupBox_1)
         sldTrans_1.setOrientation(Qt.Horizontal)
         sldTrans_1.setObjectName("sldTrans_{}".format(self.iGroupBox))
+        # 값의 범위를 0 ~ 90 으로 한정
+        sldTrans_1.setRange(0, 90)
         horLayout2_1.addWidget(sldTrans_1)
         gridLayout.addLayout(horLayout2_1, 1, 0, 1, 1)
         self.gridLayout_2.addWidget(groupBox_1, self.iGroupBox - 1, 0, 1, 1)
@@ -323,13 +339,11 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
         self.groupBoxList[self.iGroupBox] = groupBox
 
-        btnToSpWin_1.clicked.connect(lambda: self.onButton(btnToSpWin_1))
-        btnRemove_1.clicked.connect(lambda: self.onButton(btnRemove_1))
-        # btnSelColor_1.clicked.connect(lambda: self.onButton(btnSelColor_1))
-        btnSelColor_1.clicked.connect(lambda: self.onColor(btnSelColor_1))
-        btnSelColor_1.colorChanged.connect(lambda: self.onColorChanged(btnSelColor_1))
-        # btnResetColor_1.clicked.connect(lambda: self.onButton(btnResetColor_1))
-        sldTrans_1.sliderReleased.connect(lambda: self.onSliderReleased(sldTrans_1))
+        btnToSpWin_1.clicked.connect(lambda: self._onButtonClickHandler(btnToSpWin_1))
+        btnRemove_1.clicked.connect(lambda: self._onButtonClickHandler(btnRemove_1))
+        btnSelColor_1.clicked.connect(lambda: self._onClickColorButton(btnSelColor_1))
+        btnSelColor_1.colorChanged.connect(lambda: self._onColorChanged(btnSelColor_1))
+        sldTrans_1.sliderReleased.connect(lambda: self._onSliderReleased(sldTrans_1))
 
         spacerItem = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.gridLayout_2.addItem(spacerItem, self.iGroupBox, 0, 1, 1)
@@ -343,7 +357,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         groupBox = groupObj["groupBox"]
         groupBox.deleteLater()
 
-    def onButton(self, buttonObj):
+    def _onButtonClickHandler(self, buttonObj):
         try:
             groupId = buttonObj.parent().id
             buttonTitle = buttonObj.text()
@@ -362,55 +376,68 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         else:
             return
 
-    def onSliderReleased(self, sliderObj):
+    def _onSliderReleased(self, sliderObj):
         value = sliderObj.value()
+        self.debug(u"투명도: {}".format(value))
         groupId = sliderObj.parent().id
         groupObj = self.groupBoxList[groupId]
 
         treeNode = groupObj["treeItem"]
+        self.setNodeTransparency(treeNode, value)
 
+    def setNodeTransparency(self, treeNode, value):
         for node in treeNode.children():
-            if node.nodeType() == QgsLayerTreeNode.NodeLayer:
+            nodeType = node.nodeType()
+
+            # 그룹인 경우 재귀호출
+            if nodeType == QgsLayerTreeNode.NodeGroup:
+                self.setNodeTransparency(node, value)
+            elif nodeType == QgsLayerTreeNode.NodeLayer:
                 layer = node.layer()
                 if layer.type() == 0:  # QgsVectorLayer
-                    layer.setLayerTransparency(100 - value)
+                    layer.setLayerTransparency(value)
                 else:  # QgsRasterLayer
-                    layer.renderer().setOpacity(1.0 - value * 0.01)
+                    layer.renderer().setOpacity(1.0 - (value * 0.01))
 
                 layer.triggerRepaint()
 
-    def onColor(self, buttonObj):
+    def _onClickColorButton(self, buttonObj):
         self._orgColor = buttonObj.color()
         buttonObj.show()
 
-    def onColorChanged(self, buttonObj):
+    def _onColorChanged(self, buttonObj):
         newColor = buttonObj.color()
         if self._orgColor == newColor:
             return
-        self.error("ENTER")
-
-        colorText = "{},{},{}".format(newColor.red, newColor.green, newColor.blue)
 
         groupId = buttonObj.parent().id
         groupObj = self.groupBoxList[groupId]
 
         treeNode = groupObj["treeItem"]
+        self.setNodeColor(treeNode, newColor)
+
+    def setNodeColor(self, treeNode, newColor):
+        colorText = "{},{},{}".format(newColor.red(), newColor.green(), newColor.blue())
 
         for node in treeNode.children():
-            if node.nodeType() == QgsLayerTreeNode.NodeLayer:
+            nodeType = node.nodeType()
+
+            # 그룹인 경우 재귀호출
+            if nodeType == QgsLayerTreeNode.NodeGroup:
+                self.setNodeColor(node, newColor)
+            elif node.nodeType() == QgsLayerTreeNode.NodeLayer:
                 layer = node.layer()
-                self.debug(str(layer))
-                self.debug(str(layer.type()))
+                self.debug(u"Layer: {}".format(layer.name()))
                 if layer.type() == QgsMapLayer.VectorLayer:  # QgsVectorLayer
                     geomType = layer.geometryType()
-                    if geomType == QGis.Point:
-                        self.debug("point")
-                        symbol = QgsMarkerSymbolV2().createSimple({'color': colorText, 'name': 'square'})
-                    elif geomType == QGis.Line:
-                        self.debug("line")
+                    # if geomType == QGis.Point:
+                    if geomType == 0:
+                        symbol = QgsMarkerSymbolV2().createSimple({'color': colorText, 'name': 'circle'})
+                    # elif geomType == QGis.Line:
+                    elif geomType == 1:
                         symbol = QgsLineSymbolV2().createSimple({'color': colorText})
-                    elif geomType == QGis.Polygon:
-                        self.debug("poly")
+                    # elif geomType == QGis.Polygon:
+                    elif geomType == 2:
                         symbol = QgsFillSymbolV2().createSimple({'color': colorText, 'style_border':'no', 'style': 'solid'})
                     else:
                         continue
@@ -427,7 +454,6 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
                     root_rule.removeChildAt(0)
                     layer.setRendererV2(renderer)
                     layer.triggerRepaint()
-                self.debug("end")
 
     def makeMirrorWindow(self):
         from qgis import utils

@@ -127,8 +127,7 @@ class OnMapLoader():
             if self.forceStop:
                 raise StoppedByUserException()
 
-            # TEST
-            # self.importPdfRaster()
+            self.importPdfRaster()
             if self.forceStop:
                 raise StoppedByUserException()
 
@@ -139,7 +138,7 @@ class OnMapLoader():
             self.progressMain.setValue(0)
             self.progressSub.setValue(0)
 
-            self.appendGroupBox(self.pdfPath)
+            self.appendGroupBox()
 
             self.isOnProcessing = False
 
