@@ -123,11 +123,19 @@ class OnMapLoader():
             if self.forceStop:
                 raise StoppedByUserException()
 
-            self.importPdfVector()
+            # create layer group
+            root = QgsProject.instance().layerTreeRoot()
+            filename, extension = os.path.splitext(os.path.basename(self.pdfPath))
+
+            groupTitle = self.parent.getNewLayerTitle(filename)
+
+            layerTreeGroup = root.addGroup(groupTitle)
+
+            self.importPdfVector(layerTreeGroup)
             if self.forceStop:
                 raise StoppedByUserException()
 
-            self.importPdfRaster()
+            self.importPdfRaster(layerTreeGroup)
             if self.forceStop:
                 raise StoppedByUserException()
 
@@ -320,7 +328,7 @@ class OnMapLoader():
 
         return True
 
-    def importPdfVector(self):
+    def importPdfVector(self, layerTreeGroup):
         QgsApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             self.info(u"PDF에서 벡터정보 추출 시작...")
@@ -330,10 +338,6 @@ class OnMapLoader():
             crs.ImportFromEPSG(self.crsId)
             crsWkt = crs.ExportToWkt()
 
-            # create layer group
-            root = QgsProject.instance().layerTreeRoot()
-            filename, extension = os.path.splitext(os.path.basename(self.pdfPath))
-            self.parent.mainGroup = root.addGroup(filename)
             subGroup = None
             subGroupName = None
 
@@ -366,7 +370,7 @@ class OnMapLoader():
                     subGroupName = layerGroupSpilt[0]
                     if subGroup:
                         subGroup.setExpanded(False)
-                    subGroup = self.parent.mainGroup.addGroup(subGroupName)
+                    subGroup = layerTreeGroup.addGroup(subGroupName)
 
                 self.progText(u"{} 레이어 처리중({}/{})...".format(layerName, crrIndex, totalCount))
 
@@ -481,7 +485,7 @@ class OnMapLoader():
         for i in range(0, len(srcNpArray)):
             geometry.moveVertex(tgtNpList[i, 0], tgtNpList[i, 1], i)
 
-    def importPdfRaster(self):
+    def importPdfRaster(self, layerTreeGroup):
         QgsApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             self.info(u"영상 정보 추출시작")
@@ -730,7 +734,7 @@ class OnMapLoader():
 
             rasterLayer = QgsRasterLayer(geoTiffPath, u"정사영상")
             QgsMapLayerRegistry.instance().addMapLayer(rasterLayer, False)
-            self.parent.mainGroup.addLayer(rasterLayer)
+            layerTreeGroup.addLayer(rasterLayer)
 
             force_gui_update()
 

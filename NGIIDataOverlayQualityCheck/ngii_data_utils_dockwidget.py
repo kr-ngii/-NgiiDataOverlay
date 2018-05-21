@@ -28,6 +28,7 @@ from PyQt4.QtGui import *
 from PyQt4 import QtGui, uic
 from qgis.gui import QgsColorButton
 from qgis.core import *
+import re
 
 # from ngii_data_utils_dockwidget_base import Ui_NgiiDataUtilsDockWidgetBase
 from OnMap import OnMapLoader
@@ -96,25 +97,21 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         if not self.displayError:
             return
         self.editLog.appendHtml(u'<font color="red"><b>{}</b></font>'.format(msg))
-        self.editLog.moveCursor(QTextCursor.End)
 
     def info(self, msg):
         if not self.displayInfo:
             return
         self.editLog.appendHtml(u'<font color="black">{}</font>'.format(msg))
-        self.editLog.moveCursor(QTextCursor.End)
 
     def debug(self, msg):
         if not self.displayDebug:
             return
         self.editLog.appendHtml(u'<font color="green">{}</font>'.format(msg))
-        self.editLog.moveCursor(QTextCursor.End)
 
     def comment(self, msg):
         if not self.displayComment:
             return
         self.editLog.appendHtml(u'<font color="blue"><b>{}</b></font>'.format(msg))
-        self.editLog.moveCursor(QTextCursor.End)
 
     # 상태정보 표시
     def progText(self, text):
@@ -140,11 +137,29 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         self.connect(self.btnLoadInternetBaseMap, SIGNAL("clicked()"), self._on_click_btnLoadInternetBaseMap)
         self.connect(self.btnReportError, SIGNAL("clicked()"), self._on_click_btnReportError)
 
+        root = QgsProject.instance().layerTreeRoot()
+        root.removedChildren.connect(self._onRemoveLayerTree)
+
     def _createLoader(self):
         self._onMapLoader = OnMapLoader(self.iface, self)
         self._shpLoader = ShpLoader(self.iface, self)
         self._gpkgLoader = GpkgLoader(self.iface, self)
         self._dxfLoader = DxfLoader(self.iface, self)
+
+    def _onRemoveLayerTree(self, node, indexFrom, indexTo):
+        if node is None: return
+        if indexFrom is None: return
+        if indexTo is None: return
+
+        self.debug(u"node:{}, indexFrom:{}, indexTo:{}".format(node.name(), indexFrom, indexTo))
+        nodeType = node.nodeType()
+        if nodeType != QgsLayerTreeNode.NodeGroup:
+            return
+
+        targetNodes = node.children()[indexFrom:(indexTo + 1)]
+        for childNode in targetNodes:
+            self.debug(u"Remove Group {}".format(childNode.name()))
+
 
     def _on_click_btnAutoDetect(self):
         res = self._autoDetecter.checkEnv()
@@ -220,10 +235,9 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
         filename, extension = os.path.splitext(rasterPath)
 
-        if extension.lower() == ".pdf":
-            if self._onMapLoader:
-                self._onMapLoader.runImport(rasterPath)
-        elif extension.lower() == ".shp":
+        if extension.lower() == ".img":
+            pass
+        elif extension.lower() == ".tif":
             pass
 
     def _on_click_btnLoadTms(self):
@@ -239,10 +253,24 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         pass
 
     def _on_click_btnReportError(self):
+        # TODO: remove
         self.connectRemoteDebugger()
-        pass
 
-    def appendGroupBox(self):
+    def getNewLayerTitle(self, title):
+        dupeCount = 0
+
+        filter = ur"{}(\d*)".format(title)
+        for key in self.groupBoxList:
+            groupBox = self.groupBoxList[key]
+            if re.match(filter, title):
+                dupeCount += 1
+
+        if dupeCount > 0:
+            title += u"({})".format(dupeCount + 1)
+
+        return title
+
+    def appendGroupBox(self, isRaster=False):
         if self.mainGroup is not None:
             title = self.mainGroup.name()
         else:
@@ -266,6 +294,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         groupBox_1.setObjectName("groupBox_{}".format(self.iGroupBox))
         gridLayout = QGridLayout(groupBox_1)
         gridLayout.setObjectName("gridLayout")
+
         horLayout1_1 = QHBoxLayout()
         horLayout1_1.setObjectName("horLayout1_{}".format(self.iGroupBox))
         btnToSpWin_1 = QPushButton(groupBox_1)
@@ -282,26 +311,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         btnRemove_1.setObjectName("btnRemove_{}".format(self.iGroupBox))
         horLayout1_1.addWidget(btnRemove_1)
         gridLayout.addLayout(horLayout1_1, 0, 0, 1, 1)
-        horLayout3_1 = QHBoxLayout()
-        horLayout3_1.setObjectName("horLayout3_{}".format(self.iGroupBox))
-        lblColor_1 = QLabel(groupBox_1)
-        lblColor_1.setObjectName("lblColor_{}".format(self.iGroupBox))
-        horLayout3_1.addWidget(lblColor_1)
-        # btnSelColor_1 = QPushButton(groupBox_1)
-        btnSelColor_1 = QgsColorButton(groupBox_1)
-        btnSelColor_1.setObjectName("btnSelColor_{}".format(self.iGroupBox))
-        horLayout3_1.addWidget(btnSelColor_1)
-        # btnResetColor_1 = QPushButton(groupBox_1)
-        # sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        # sizePolicy.setHorizontalStretch(0)
-        # sizePolicy.setVerticalStretch(0)
-        # sizePolicy.setHeightForWidth(btnResetColor_1.sizePolicy().hasHeightForWidth())
-        # btnResetColor_1.setSizePolicy(sizePolicy)
-        # btnResetColor_1.setMinimumSize(QSize(50, 0))
-        # btnResetColor_1.setMaximumSize(QSize(50, 16777215))
-        # btnResetColor_1.setObjectName("btnResetColor_{}".format(self.iGroupBox))
-        # horLayout3_1.addWidget(btnResetColor_1)
-        gridLayout.addLayout(horLayout3_1, 2, 0, 1, 1)
+
         horLayout2_1 = QHBoxLayout()
         horLayout2_1.setObjectName("horLayout2_{}".format(self.iGroupBox))
         lblTrans_1 = QLabel(groupBox_1)
@@ -315,53 +325,83 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         sldTrans_1.setRange(0, 90)
         horLayout2_1.addWidget(sldTrans_1)
         gridLayout.addLayout(horLayout2_1, 1, 0, 1, 1)
+
+        if not isRaster:
+            horLayout3_1 = QHBoxLayout()
+            horLayout3_1.setObjectName("horLayout3_{}".format(self.iGroupBox))
+            lblColor_1 = QLabel(groupBox_1)
+            lblColor_1.setObjectName("lblColor_{}".format(self.iGroupBox))
+            horLayout3_1.addWidget(lblColor_1)
+            btnSelColor_1 = QgsColorButton(groupBox_1)
+            btnSelColor_1.setObjectName("btnSelColor_{}".format(self.iGroupBox))
+            horLayout3_1.addWidget(btnSelColor_1)
+            gridLayout.addLayout(horLayout3_1, 2, 0, 1, 1)
+
         self.gridLayout_2.addWidget(groupBox_1, self.iGroupBox - 1, 0, 1, 1)
 
         groupBox_1.setTitle(title)
         btnToSpWin_1.setText(u"분할창으로 띄우기")
         btnRemove_1.setText(u"제거")
-        lblColor_1.setText(u"색  상:")
-        # btnResetColor_1.setText(u"초기화")
+        if not isRaster:
+            lblColor_1.setText(u"색  상:")
         lblTrans_1.setText(u"투명도:")
 
-        groupBox = {
-            "id": self.iGroupBox,
-            "type": "onmap",
-            "title": title,
-            "treeItem": self.mainGroup,
-            "groupBox": groupBox_1,
-            "btnToSpWin": btnToSpWin_1,
-            "btnRemove": btnRemove_1,
-            "btnSelColor": btnSelColor_1,
-            # "btnResetColor": btnResetColor_1,
-            "sldTrans": sldTrans_1
-        }
+        if not isRaster:
+            groupBox = {
+                "id": self.iGroupBox,
+                "type": "onmap",
+                "title": title,
+                "treeItem": self.mainGroup,
+                "groupBox": groupBox_1,
+                "btnToSpWin": btnToSpWin_1,
+                "btnRemove": btnRemove_1,
+                "btnSelColor": btnSelColor_1,
+                "sldTrans": sldTrans_1
+            }
+        else:
+            groupBox = {
+                "id": self.iGroupBox,
+                "type": "onmap",
+                "title": title,
+                "treeItem": self.mainGroup,
+                "groupBox": groupBox_1,
+                "btnToSpWin": btnToSpWin_1,
+                "btnRemove": btnRemove_1,
+                # "btnSelColor": btnSelColor_1,
+                "sldTrans": sldTrans_1
+            }
 
         self.groupBoxList[self.iGroupBox] = groupBox
 
-        btnToSpWin_1.clicked.connect(lambda: self._onButtonClickHandler(btnToSpWin_1))
-        btnRemove_1.clicked.connect(lambda: self._onButtonClickHandler(btnRemove_1))
-        btnSelColor_1.clicked.connect(lambda: self._onClickColorButton(btnSelColor_1))
-        btnSelColor_1.colorChanged.connect(lambda: self._onColorChanged(btnSelColor_1))
-        sldTrans_1.sliderReleased.connect(lambda: self._onSliderReleased(sldTrans_1))
+        btnToSpWin_1.clicked.connect(lambda: self._onGroupBoxSubButtonClick(btnToSpWin_1))
+        btnRemove_1.clicked.connect(lambda: self._onGroupBoxSubButtonClick(btnRemove_1))
+        if not isRaster:
+            btnSelColor_1.clicked.connect(lambda: self._onGroupBoxColorButtonClick(btnSelColor_1))
+            btnSelColor_1.colorChanged.connect(lambda: self._onGroupBoxColorChanged(btnSelColor_1))
+        sldTrans_1.sliderReleased.connect(lambda: self._onGroupBoxSliderReleased(sldTrans_1))
 
         spacerItem = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.gridLayout_2.addItem(spacerItem, self.iGroupBox, 0, 1, 1)
 
-    @staticmethod
-    def removeGroupBox(groupObj):
-        treeNode = groupObj["treeItem"]
-        parentNode = treeNode.parent()
-        parentNode.removeChildNode(treeNode)
+    def removeGroupBox(self, groupObj):
+        if not groupObj: return
 
         groupBox = groupObj["groupBox"]
+        if not groupBox: return
+
+        self.debug(u"Remove Group Box {}".format(groupBox.title()))
         groupBox.deleteLater()
 
-    def _onButtonClickHandler(self, buttonObj):
+        treeNode = groupObj["treeItem"]
+        if not treeNode: return
+        parentNode = treeNode.parent()
+        if not parentNode: return
+        parentNode.removeChildNode(treeNode)
+
+    def _onGroupBoxSubButtonClick(self, buttonObj):
         try:
             groupId = buttonObj.parent().id
             buttonTitle = buttonObj.text()
-            groupTitle = buttonObj.parent().title()
 
             try:
                 groupObj = self.groupBoxList[groupId]
@@ -376,7 +416,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         else:
             return
 
-    def _onSliderReleased(self, sliderObj):
+    def _onGroupBoxSliderReleased(self, sliderObj):
         value = sliderObj.value()
         self.debug(u"투명도: {}".format(value))
         groupId = sliderObj.parent().id
@@ -401,11 +441,11 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
                 layer.triggerRepaint()
 
-    def _onClickColorButton(self, buttonObj):
+    def _onGroupBoxColorButtonClick(self, buttonObj):
         self._orgColor = buttonObj.color()
         buttonObj.show()
 
-    def _onColorChanged(self, buttonObj):
+    def _onGroupBoxColorChanged(self, buttonObj):
         newColor = buttonObj.color()
         if self._orgColor == newColor:
             return

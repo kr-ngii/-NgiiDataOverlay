@@ -16,9 +16,18 @@ class ShpLoader():
         self.parent = parent
 
     def runImport(self, fileList):
+        if len(fileList) <= 0: return
+
+        # 그룹명을 폴더명으로
+        title = os.path.basename(os.path.split(fileList[0])[0])
+        if title == "":
+            title = u"ESRI Shape"
+
+        title = self.parent.getNewLayerTitle(title)
+
         # 그룹부터 만들고
         root = QgsProject.instance().layerTreeRoot()
-        self.parent.mainGroup = root.addGroup(u"ESRI Shape")
+        self.parent.mainGroup = root.addGroup(title)
 
         # 하나씩 임포트
         for filePath in fileList:
