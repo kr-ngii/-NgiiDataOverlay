@@ -183,6 +183,9 @@ class NgiiDataUtils:
             # show the dockwidget
             # TODO: fix to allow choice of dock location
             self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dockwidget)
+            # 좌우로 붙게 수정
+            self.dockwidget.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+
             self.dockwidget.show()
         else:
             self.dockwidget.close()

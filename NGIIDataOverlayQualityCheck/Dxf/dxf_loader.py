@@ -9,24 +9,36 @@ class DxfLoader():
     iface = None
     parent = None
 
-    def __init__(self, iface, filePath):
-        self.iface
-        self.parent
+    def __init__(self, iface, parent):
+        self.iface = iface
+        self.parent = parent
 
     def runImport(self, filePath):
         srcDriver = ogr.GetDriverByName("DXF")
 
         # 그룹부터 만들고
         filename, _ = os.path.splitext(os.path.basename(filePath))
+        title = self.parent.getNewGroupTitle(filename)
+
+        # 그룹부터 만들고
         root = QgsProject.instance().layerTreeRoot()
-        mainGroup = root.addGroup(filename)
+        layerTreeGroup = root.addGroup(title)
 
         # 하나씩 임포트
         try:
-            # TODO: 좌표계는 일단 무조건 5186으로
-            layer = srcDriver.Open(filePath, 0)
-            QgsMapLayerRegistry.instance().addMapLayer(layer, False)
-            mainGroup.insertChildNode(1, QgsLayerTreeLayer(layer))
+            self.importDxf(filePath, layerTreeGroup)
 
         except Exception as e:
             raise e
+
+        self.parent.appendGroupBox(layerTreeGroup, "dxf")
+
+
+    def importDxf(self, filePath, layerTreeGroup):
+        filename, extension = os.path.splitext(os.path.basename(filePath))
+
+        # TODO: 좌표계가 없을 가능성에 대비하라
+        layer = QgsVectorLayer(filePath, filename, "ogr")
+        QgsMapLayerRegistry.instance().addMapLayer(layer, False)
+        layerTreeGroup.insertChildNode(1, QgsLayerTreeLayer(layer))
+

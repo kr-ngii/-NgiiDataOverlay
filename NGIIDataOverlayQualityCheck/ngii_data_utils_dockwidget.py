@@ -277,7 +277,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         # TODO: remove
         self.connectRemoteDebugger()
 
-    def getNewLayerTitle(self, title):
+    def getNewGroupTitle(self, title):
         dupeCount = 0
 
         filter = u"{}(\\d*)".format(title)
@@ -324,7 +324,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(groupBox_1.sizePolicy().hasHeightForWidth())
         groupBox_1.setSizePolicy(sizePolicy)
-        groupBox_1.setMaximumSize(QSize(16777215, 130))
+        groupBox_1.setMaximumSize(QSize(280, 130))
         groupBox_1.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
         groupBox_1.setObjectName("groupBox_{}".format(self.iGroupBox))
         gridLayout = QGridLayout(groupBox_1)
@@ -503,7 +503,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
                         symbol = QgsLineSymbolV2().createSimple({'color': colorText})
                     # elif geomType == QGis.Polygon:
                     elif geomType == 2:
-                        symbol = QgsFillSymbolV2().createSimple({'color': colorText, 'style_border':'no', 'style': 'solid'})
+                        symbol = QgsFillSymbolV2().createSimple({'color': colorText, 'outline_color': colorText, 'style': 'x'})
                     else:
                         continue
 

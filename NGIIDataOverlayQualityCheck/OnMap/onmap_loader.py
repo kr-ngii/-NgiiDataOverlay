@@ -127,7 +127,7 @@ class OnMapLoader():
             root = QgsProject.instance().layerTreeRoot()
             filename, extension = os.path.splitext(os.path.basename(self.pdfPath))
 
-            groupTitle = self.parent.getNewLayerTitle(filename)
+            groupTitle = self.parent.getNewGroupTitle(filename)
 
             layerTreeGroup = root.addGroup(groupTitle)
 

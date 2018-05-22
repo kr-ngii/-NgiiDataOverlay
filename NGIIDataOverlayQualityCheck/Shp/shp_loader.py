@@ -23,7 +23,7 @@ class ShpLoader():
         if title == "":
             title = u"ESRI Shape"
 
-        title = self.parent.getNewLayerTitle(title)
+        title = self.parent.getNewGroupTitle(title)
 
         # 그룹부터 만들고
         root = QgsProject.instance().layerTreeRoot()
