@@ -30,13 +30,13 @@ from mirrorMap import MirrorMap
 
 class DockableMirrorMap(QDockWidget):
 
-	TITLE = "MirrorMap"
+	TITLE = u"분할창"
 
 	def __init__(self, parent, iface):
 		QDockWidget.__init__(self, parent)
 
 		self.mainWidget = MirrorMap(self, iface)
-		self.location = Qt.RightDockWidgetArea
+		self.location = Qt.BottomDockWidgetArea
 		self.number = -1
 
 		self.setupUi()
@@ -65,8 +65,9 @@ class DockableMirrorMap(QDockWidget):
 		self.setWidget(self.mainWidget)
 
 	def updateLabel(self):
-		title = "%s #%s" % (self.TITLE, self.number) if self.number >= 0 else self.TITLE
-		if len(self.mainWidget.label) != 0:
-			title += ": " + self.mainWidget.label
+		# title = "%s #%s" % (self.TITLE, self.number) if self.number >= 0 else self.TITLE
+		# if len(self.mainWidget.label) != 0:
+		# 	title += ": " + self.mainWidget.label
+		title = self.TITLE
 		self.setWindowTitle( title )
 

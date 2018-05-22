@@ -43,7 +43,7 @@ class WebLayerTypeRegistry:
 
     def register(self, layerType):
         layerType.group = self.group(layerType.groupName, layerType.groupIcon)
-        layerType.setAddLayerCallback(self._plugin.addLayer)
+        # layerType.setAddLayerCallback(self._plugin.addLayer)
         layerType.layerTypeId = self._layerTypeId
         self._olLayerTypes[self._layerTypeId] = layerType
         self._layerTypeId += 1

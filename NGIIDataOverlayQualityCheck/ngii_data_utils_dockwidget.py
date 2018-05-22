@@ -37,11 +37,14 @@ from Shp import ShpLoader
 from Gpkg import GpkgLoader
 from Dxf import DxfLoader
 from Image import ImageLoader
-# from TmsForKorea.openlayers_overview import OLOverview
-# from TmsForKorea.openlayers_layer import OpenlayersLayer
-# from TmsForKorea.openlayers_plugin_layer_type import OpenlayersPluginLayerType
+
+from TmsForKorea.openlayers_overview import OLOverview
+from TmsForKorea.openlayers_layer import OpenlayersLayer
+from TmsForKorea.openlayers_plugin_layer_type import OpenlayersPluginLayerType
 from TmsForKorea.weblayers.weblayer_registry import WebLayerTypeRegistry
 from TmsForKorea.weblayers.ngii_maps import OlNgiiStreetLayer
+
+from DockableMirrorMap.dockableMirrorMap import DockableMirrorMap
 
 
 class QMyGroupBox(QGroupBox):
@@ -73,7 +76,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
     iGroupBox = 0
     groupBoxList = None
 
-    displayDebug = True
+    displayDebug = False
     displayInfo = True
     displayComment = True
     displayError = True
@@ -86,11 +89,13 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         self.iface = iface
         self._connect_action()
         self._createLoader()
+        self.btnReportError.hide()
 
         self.groupBoxList = dict()
 
         self._olLayerTypeRegistry = WebLayerTypeRegistry(self)
-        self._olLayerTypeRegistry.register(OlNgiiStreetLayer())
+        self.dockableMirrors = []
+        self.lastDockableMirror = 0
 
     def connectRemoteDebugger(self):
         try:
@@ -205,13 +210,6 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         self._autoDetecter.show()
 
     def _on_click_btnLoadVector(self):
-        # 기존 폴더 유지하게 옵션 추가: https://stackoverflow.com/questions/23002801/pyqt-how-to-make-getopenfilename-remember-last-opening-path
-        # vectorPath = QFileDialog.getOpenFileName(caption=u"국토지리정보 벡터파일 선택",
-        #                                          filter=u"국토지리정보 벡터파일(*.gpkg *.shp *.pdf *.dxf)",
-        #                                          options=QFileDialog.DontUseNativeDialog,
-        #                                          fileMode=QFileDialog.ExistingFiles)
-        # if vectorPath is None:
-        #     return
         dialog = QtGui.QFileDialog(self)
         dialog.setFileMode(QtGui.QFileDialog.ExistingFiles)
 
@@ -286,17 +284,62 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
                 self._imageLoader.runImport(rasterPath)
 
     def _on_click_btnLoadTms(self):
-        tms = OlNgiiStreetLayer()
-        tms.addLayer()
+        # tms = OlNgiiStreetLayer()
+        # tms.addLayer()
+
+        self._olMenu = QMenu("TMS for Korea")
+        self._olLayerTypeRegistry.register(OlNgiiStreetLayer())
+        for group in self._olLayerTypeRegistry.groups():
+            groupMenu = group.menu()
+            for layer in self._olLayerTypeRegistry.groupLayerTypes(group):
+                layer.addMenuEntry(groupMenu, self.iface.mainWindow())
+            self._olMenu.addMenu(groupMenu)
+
+        self._menu = self.iface.webMenu()
+        self._menu.addMenu(self._olMenu)
+
+    def loadWms(self, layerList, title):
+        layersText = u"&layers=".join(layerList)
+        stylesText = u"&styles=" * len(layerList)
+        # urlWithParams = u'crs=EPSG:4326&dpiMode=7&format=image/png&layers=tn_buld&styles=&layers=tn_river_bndry&styles=&url=http://seoul.gaia3d.com:8989/geoserver/ngii/wms?'.format(",".join(layerList))
+        urlWithParams = u'crs=EPSG:4326&dpiMode=7&format=image/png&layers={}{}&url=http://seoul.gaia3d.com:8989/geoserver/ngii/wms?'.format(layersText, stylesText)
+        self.debug(urlWithParams)
+        rlayer = QgsRasterLayer(urlWithParams, title, 'wms')
+        rlayer.isValid()
+        QgsMapLayerRegistry.instance().addMapLayer(rlayer)
 
     def _on_click_btnLoadBaseMap(self):
-        pass
+        canvas = self.iface.mapCanvas()
+        scale = canvas.scale()
+        if scale > 50000:
+            self.alert(u"1:50,000 보다 크게 확대하셔야 사용 가능합니다.")
+            return
+
+        # layerList = ["tn_alpt","tn_arafc","tn_arhfc","tn_arpgr","tn_arrfc","tn_arsfc","tn_arwfc","tn_bcycl_ctln","tn_buld","tn_buld_adcls","tn_ctprvn_bndry","tn_ctrln","tn_emd_bndry","tn_fclty_zone_bndry","tn_fmlnd_bndry","tn_ftpth_bndry","tn_ftpth_ctln","tn_lkmh","tn_lnafc","tn_lnpgr","tn_lnrfc","tn_lnsfc","tn_mtc_bndry","tn_ptafc","tn_pthfc","tn_ptpgr","tn_ptrfc","tn_ptsfc","tn_ptwfc","tn_river_bndry","tn_river_bt","tn_river_ctln","tn_rlroad_bndry","tn_rlroad_ctln","tn_rodway_bndry","tn_rodway_ctln","tn_shorline","tn_signgu_bndry","tn_wtcors_fclty"]
+        layerList = ["tn_shorline","tn_lkmh", "tn_river_bt","tn_river_bndry","tn_river_ctln", "tn_fmlnd_bndry","tn_rodway_bndry","tn_rodway_ctln","tn_ctrln","tn_buld_adcls","tn_buld"]
+        self.loadWms(layerList, u'국토기본정보(전체)')
 
     def _on_click_btnLoadOnmapBaseMap(self):
-        pass
+        canvas = self.iface.mapCanvas()
+        scale = canvas.scale()
+        if scale > 50000:
+            self.alert(u"1:50,000 보다 크게 확대하셔야 사용 가능합니다.")
+            return
+
+        # layerList = ["tn_river_bt","tn_fmlnd_bndry","tn_rodway_bndry","tn_arrfc","tn_ctrln","tn_emd_bndry","tn_signgu_bndry","tn_ctprvn_bndry","tn_buld"]
+        layerList = ["tn_river_bt","tn_fmlnd_bndry","tn_rodway_bndry","tn_rodway_ctln","tn_ctrln","tn_buld"]
+        self.loadWms(layerList, u'국토기본정보(온맵해당)')
 
     def _on_click_btnLoadInternetBaseMap(self):
-        pass
+        canvas = self.iface.mapCanvas()
+        scale = canvas.scale()
+        if scale > 50000:
+            self.alert(u"1:50,000 보다 크게 확대하셔야 사용 가능합니다.")
+            return
+
+        # layerList = ["tn_shorline","tn_river_bt","tn_river_bndry","tn_river_ctln", "tn_fmlnd_bndry","tn_rodway_bndry","tn_rodway_ctln","tn_arrfc","tn_ctrln","tn_emd_bndry","tn_signgu_bndry","tn_ctprvn_bndry","tn_buld"]
+        layerList = ["tn_shorline","tn_river_bt","tn_river_bndry","tn_river_ctln", "tn_fmlnd_bndry","tn_rodway_bndry","tn_rodway_ctln","tn_ctrln","tn_buld"]
+        self.loadWms(layerList, u'국토기본정보(인터넷지도해당)')
 
     def _on_click_btnReportError(self):
         # TODO: remove
@@ -386,7 +429,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
         groupBox_1.setTitle(title)
         btnToSpWin_1.setText(u"분할창에 띄우기")
-        # btnRemove_1.setText(u"한번에 제거")
+        # btnRemove_1.setText(u"제거")
         lblTrans_1.setText(u"투명도:")
 
         if not isRaster:
@@ -463,8 +506,109 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
         if buttonTitle == u"제거":
             self.removeGroupBox(groupObj)
+        elif buttonTitle == u"분할창에 띄우기":
+            self.createSplitWindow(groupObj)
         else:
             return
+
+    def createSplitWindow(self, groupObj):
+        # self.splitWidget = MirrorMap(self, self.iface)
+        # \\self.location = Qt.BottomDockWidgetArea
+        wdg = DockableMirrorMap(self.iface.mainWindow(), self.iface)
+        wdg.setLocation(Qt.BottomDockWidgetArea)
+
+        minsize = wdg.minimumSize()
+        maxsize = wdg.maximumSize()
+
+        self.setupDockWidget(wdg)
+        self.addDockWidget(wdg)
+
+        wdg.setMinimumSize(minsize)
+        wdg.setMaximumSize(maxsize)
+
+        # if wdg.isFloating():
+        #     wdg.move(50, 50)  # move the widget to the center
+
+        treeNode = groupObj["treeItem"]
+        self.addGroupToSplitWindow(treeNode, wdg)
+
+
+    def addGroupToSplitWindow(self, treeNode, wdg):
+        for node in treeNode.children():
+            nodeType = node.nodeType()
+
+            # 그룹인 경우 재귀호출
+            if nodeType == QgsLayerTreeNode.NodeGroup:
+                self.addGroupToSplitWindow(node, wdg)
+            elif nodeType == QgsLayerTreeNode.NodeLayer:
+                layer = node.layer()
+                self.iface.layerTreeView().setCurrentLayer(layer)
+                wdg.mainWidget.addLayer()
+
+    def setupDockWidget(self, wdg):
+        # othersize = QGridLayout().verticalSpacing()
+        #
+        # if len(self.dockableMirrors) <= 0:
+        #     width = self.iface.mapCanvas().size().width() / 2 - othersize
+        #     wdg.setLocation(Qt.RightDockWidgetArea)
+        #     wdg.setMinimumWidth(width)
+        #     wdg.setMaximumWidth(width)
+        #
+        # elif len(self.dockableMirrors) == 1:
+        #     height = self.dockableMirrors[0].size().height() / 2 - othersize / 2
+        #     wdg.setLocation(Qt.RightDockWidgetArea)
+        #     wdg.setMinimumHeight(height)
+        #     wdg.setMaximumHeight(height)
+        #
+        # elif len(self.dockableMirrors) == 2:
+        #     height = self.iface.mapCanvas().size().height() / 2 - othersize / 2
+        #     wdg.setLocation(Qt.BottomDockWidgetArea)
+        #     wdg.setMinimumHeight(height)
+        #     wdg.setMaximumHeight(height)
+        #
+        # else:
+        #     wdg.setLocation(Qt.BottomDockWidgetArea)
+        #     wdg.setFloating(True)
+
+        height = self.iface.mapCanvas().size().height() / 2
+        wdg.setMinimumHeight(height)
+        wdg.setMaximumHeight(height)
+        wdg.setLocation(Qt.BottomDockWidgetArea)
+
+    def addDockWidget(self, wdg, position=None):
+        if position == None:
+            position = wdg.getLocation()
+        else:
+            wdg.setLocation(position)
+
+        mapCanvas = self.iface.mapCanvas()
+        oldSize = mapCanvas.size()
+
+        prevFlag = mapCanvas.renderFlag()
+        mapCanvas.setRenderFlag(False)
+        self.iface.addDockWidget(position, wdg)
+
+        wdg.setNumber(self.lastDockableMirror)
+        self.lastDockableMirror = self.lastDockableMirror + 1
+        self.dockableMirrors.append(wdg)
+
+        QObject.connect(wdg, SIGNAL("closed(PyQt_PyObject)"), self.onCloseDockableMirror)
+
+        newSize = mapCanvas.size()
+        if newSize != oldSize:
+            # trick: update the canvas size
+            mapCanvas.resize(newSize.width() - 1, newSize.height())
+            mapCanvas.setRenderFlag(prevFlag)
+            mapCanvas.resize(newSize)
+        else:
+            mapCanvas.setRenderFlag(prevFlag)
+
+    def onCloseDockableMirror(self, wdg):
+        if self.dockableMirrors.count(wdg) > 0:
+            self.dockableMirrors.remove(wdg)
+
+        if len(self.dockableMirrors) <= 0:
+            self.lastDockableMirror = 0
 
     def _onGroupBoxSliderReleased(self, sliderObj):
         value = sliderObj.value()
@@ -545,16 +689,3 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
                     root_rule.removeChildAt(0)
                     layer.setRendererV2(renderer)
                     layer.triggerRepaint()
-
-    def makeMirrorWindow(self):
-        from qgis import utils
-
-        try:
-            mirrorMapPlugin = utils.plugins['DockableMirrorMap']
-        except:
-            self.alert(u"Dockable MirrorMap을 설치 하셔야 동작 가능합니다.\n\n"
-                       u"QGIS의 [플러그인 - 플러그인 관리 및 설치] 메뉴로 플러그인 관리자를 실행해\n"
-                       u"Dockable MirrorMap 플러그인을 검색하시면 쉽게 설치하실 수 있습니다.")
-            return
-
-        mirrorMapPlugin.runDockableMirror()

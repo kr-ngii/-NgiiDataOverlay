@@ -150,6 +150,8 @@ class OnMapLoader():
 
             self.isOnProcessing = False
 
+            self.progText(u"온맵 불러오기 성공!")
+
         except StoppedByUserException:
             pass
         except Exception as e:
