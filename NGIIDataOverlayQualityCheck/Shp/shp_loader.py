@@ -3,7 +3,7 @@
 import os
 from qgis.core import *
 from osgeo import ogr
-from PyQt4.QtCore import Qt
+from PyQt4.QtCore import Qt, QSettings
 from .. calc_utils import force_gui_update
 
 ogr.UseExceptions()
@@ -19,6 +19,14 @@ class ShpLoader():
 
     def runImport(self, fileList):
         if len(fileList) <= 0: return
+
+        QgsApplication.setOverrideCursor(Qt.WaitCursor)
+        # 좌표계 안물어보게 하기
+        # https://gis.stackexchange.com/questions/80025/accessing-qgis-program-settings-programmatically
+        settings = QSettings()
+        # Take the "CRS for new layers" config, overwrite it while loading layers and...
+        oldProjValue = settings.value("/Projections/defaultBehaviour", "prompt", type=str)
+        settings.setValue("/Projections/defaultBehaviour", "useProject")
 
         try:
 
@@ -36,16 +44,15 @@ class ShpLoader():
             # 하나씩 임포트
             for filePath in fileList:
                 force_gui_update()
-                try:
-                    self.importShp(filePath, layerTreeGroup)
-                except Exception as e:
-                    raise e
+                self.importShp(filePath, layerTreeGroup)
+
 
             self.parent.appendGroupBox(layerTreeGroup, "shp")
 
         except Exception as e:
             raise e
         finally:
+            settings.setValue("/Projections/defaultBehaviour", oldProjValue)
             QgsApplication.restoreOverrideCursor()
 
     def importShp(self, filePath, layerTreeGroup):

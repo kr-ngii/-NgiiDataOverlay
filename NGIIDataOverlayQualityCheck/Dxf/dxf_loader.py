@@ -57,9 +57,9 @@ class DxfLoader():
         crs.ImportFromEPSG(5186)
         self.crsWkt = crs.ExportToWkt()
 
+        QgsApplication.setOverrideCursor(Qt.WaitCursor)
         # 좌표계 안물어보게 하기
         # https://gis.stackexchange.com/questions/80025/accessing-qgis-program-settings-programmatically
-        QgsApplication.setOverrideCursor(Qt.WaitCursor)
         settings = QSettings()
         # Take the "CRS for new layers" config, overwrite it while loading layers and...
         oldProjValue = settings.value("/Projections/defaultBehaviour", "prompt", type=str)

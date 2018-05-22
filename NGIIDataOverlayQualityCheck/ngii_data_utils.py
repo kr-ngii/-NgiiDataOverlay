@@ -187,4 +187,5 @@ class NgiiDataUtils:
 
             self.dockwidget.show()
         else:
-            self.dockwidget.close()
+            if self.dockwidget:
+                self.dockwidget.close()

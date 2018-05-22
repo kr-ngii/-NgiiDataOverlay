@@ -37,6 +37,12 @@ from Shp import ShpLoader
 from Gpkg import GpkgLoader
 from Dxf import DxfLoader
 from Image import ImageLoader
+# from TmsForKorea.openlayers_overview import OLOverview
+# from TmsForKorea.openlayers_layer import OpenlayersLayer
+# from TmsForKorea.openlayers_plugin_layer_type import OpenlayersPluginLayerType
+from TmsForKorea.weblayers.weblayer_registry import WebLayerTypeRegistry
+from TmsForKorea.weblayers.ngii_maps import OlNgiiStreetLayer
+
 
 class QMyGroupBox(QGroupBox):
     groupId = None
@@ -82,6 +88,9 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         self._createLoader()
 
         self.groupBoxList = dict()
+
+        self._olLayerTypeRegistry = WebLayerTypeRegistry(self)
+        self._olLayerTypeRegistry.register(OlNgiiStreetLayer())
 
     def connectRemoteDebugger(self):
         try:
@@ -277,7 +286,8 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
                 self._imageLoader.runImport(rasterPath)
 
     def _on_click_btnLoadTms(self):
-        pass
+        tms = OlNgiiStreetLayer()
+        tms.addLayer()
 
     def _on_click_btnLoadBaseMap(self):
         pass
