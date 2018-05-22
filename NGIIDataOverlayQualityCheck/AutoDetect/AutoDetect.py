@@ -261,12 +261,19 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
                 curs.execute(sql)
             conn.close()
 
+            tmp_postgres_conn_str = u"host='{}' port='{}' dbname ='{}' user='{}' password='{}'".format(host,
+                                                                                                              port,
+                                                                                                              dbname,
+                                                                                                              user,
+                                                                                                              password)
+
             # Setup extension and EPSG
             try:
-                conn = psycopg2.connect(postgres_postgres_conn_str)
+                print tmp_postgres_conn_str
+                conn = psycopg2.connect(tmp_postgres_conn_str)
                 conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
             except:
-                return u"error database connection: {}".format(postgres_postgres_conn_str)
+                return u"error database connection: {}".format(tmp_postgres_conn_str)
 
             curs = conn.cursor()
             curs.execute("SELECT extname FROM pg_extension WHERE extname = 'postgis'")
