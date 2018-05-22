@@ -37,6 +37,13 @@ from Gpkg import GpkgLoader
 from Dxf import DxfLoader
 
 
+class QMyGroupBox(QGroupBox):
+    groupId = None
+
+    def __init__(self, *__args):
+        super(QMyGroupBox, self).__init__(*__args)
+
+
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'ngii_data_utils_dockwidget_base.ui'))
 
@@ -55,7 +62,6 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
     iGroupBox = 0
     groupBoxList = None
-    mainGroup = None
 
     displayDebug = True
     displayInfo = True
@@ -138,28 +144,23 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         self.connect(self.btnReportError, SIGNAL("clicked()"), self._on_click_btnReportError)
 
         root = QgsProject.instance().layerTreeRoot()
-        root.removedChildren.connect(self._onRemoveLayerTree)
+        # root.removedChildren.connect(self.onRemovedChildren)  ## 이 이벤트는 제거된 후에 남은 것을 찾을 수 있음
+        root.willRemoveChildren.connect(self.onWillRemovedChildren)
+
+    def onWillRemovedChildren(self, node, indexFrom, indexTo):
+        children = node.children()[indexFrom : indexTo + 1]
+        # children = node.children()
+        for realNode in children:
+            groupId = realNode.customProperty("groupId")
+            if groupId is not None:
+                self.debug("Remove GroupID: {}".format(groupId))
+                self.removeLayerTreeByGroupId(groupId)
 
     def _createLoader(self):
         self._onMapLoader = OnMapLoader(self.iface, self)
         self._shpLoader = ShpLoader(self.iface, self)
         self._gpkgLoader = GpkgLoader(self.iface, self)
         self._dxfLoader = DxfLoader(self.iface, self)
-
-    def _onRemoveLayerTree(self, node, indexFrom, indexTo):
-        if node is None: return
-        if indexFrom is None: return
-        if indexTo is None: return
-
-        self.debug(u"node:{}, indexFrom:{}, indexTo:{}".format(node.name(), indexFrom, indexTo))
-        nodeType = node.nodeType()
-        if nodeType != QgsLayerTreeNode.NodeGroup:
-            return
-
-        targetNodes = node.children()[indexFrom:(indexTo + 1)]
-        for childNode in targetNodes:
-            self.debug(u"Remove Group {}".format(childNode.name()))
-
 
     def _on_click_btnAutoDetect(self):
         res = self._autoDetecter.checkEnv()
@@ -270,19 +271,33 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
         return title
 
-    def appendGroupBox(self, isRaster=False):
-        if self.mainGroup is not None:
-            title = self.mainGroup.name()
+    def appendGroupBox(self, layerTreeGroup, type):
+        if layerTreeGroup is not None:
+            title = layerTreeGroup.name()
         else:
-            raise Exception("manGroup not defined")
+            raise Exception("mainGroup not defined")
 
-        spacerItem = self.gridLayout_2.itemAtPosition(self.iGroupBox, 0)
+        if type == "img" or type == "tif":
+            isRaster = True
+        else:
+            isRaster = False
+
+        self.iGroupBox += 1
+        layerTreeGroup.uiId = self.iGroupBox
+        layerTreeGroup.type = type
+
+        self.groupBoxList[self.iGroupBox] = dict()
+        self.groupBoxList[self.iGroupBox]["id"] = self.iGroupBox
+        self.groupBoxList[self.iGroupBox]["type"] = type
+        self.groupBoxList[self.iGroupBox]["title"] = title
+        self.groupBoxList[self.iGroupBox]["treeItem"] = layerTreeGroup
+        self.groupBoxList[self.iGroupBox]["groupBox"] = None
+
+        spacerItem = self.gridLayout_2.itemAtPosition(self.iGroupBox - 1, 0)
         if spacerItem is not None:
             self.gridLayout_2.removeItem(spacerItem)
 
-        self.iGroupBox += 1
-
-        groupBox_1 = QGroupBox(self.scrollAreaWidgetContents)
+        groupBox_1 = self.groupBoxList[self.iGroupBox]["groupBox"] = QMyGroupBox(self.scrollAreaWidgetContents)
         groupBox_1.id = self.iGroupBox
         sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -326,11 +341,17 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         horLayout2_1.addWidget(sldTrans_1)
         gridLayout.addLayout(horLayout2_1, 1, 0, 1, 1)
 
+        groupBox_1.setTitle(title)
+        btnToSpWin_1.setText(u"분할창으로 띄우기")
+        btnRemove_1.setText(u"제거")
+        lblTrans_1.setText(u"투명도:")
+
         if not isRaster:
             horLayout3_1 = QHBoxLayout()
             horLayout3_1.setObjectName("horLayout3_{}".format(self.iGroupBox))
             lblColor_1 = QLabel(groupBox_1)
             lblColor_1.setObjectName("lblColor_{}".format(self.iGroupBox))
+            lblColor_1.setText(u"색  상:")
             horLayout3_1.addWidget(lblColor_1)
             btnSelColor_1 = QgsColorButton(groupBox_1)
             btnSelColor_1.setObjectName("btnSelColor_{}".format(self.iGroupBox))
@@ -339,40 +360,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
         self.gridLayout_2.addWidget(groupBox_1, self.iGroupBox - 1, 0, 1, 1)
 
-        groupBox_1.setTitle(title)
-        btnToSpWin_1.setText(u"분할창으로 띄우기")
-        btnRemove_1.setText(u"제거")
-        if not isRaster:
-            lblColor_1.setText(u"색  상:")
-        lblTrans_1.setText(u"투명도:")
-
-        if not isRaster:
-            groupBox = {
-                "id": self.iGroupBox,
-                "type": "onmap",
-                "title": title,
-                "treeItem": self.mainGroup,
-                "groupBox": groupBox_1,
-                "btnToSpWin": btnToSpWin_1,
-                "btnRemove": btnRemove_1,
-                "btnSelColor": btnSelColor_1,
-                "sldTrans": sldTrans_1
-            }
-        else:
-            groupBox = {
-                "id": self.iGroupBox,
-                "type": "onmap",
-                "title": title,
-                "treeItem": self.mainGroup,
-                "groupBox": groupBox_1,
-                "btnToSpWin": btnToSpWin_1,
-                "btnRemove": btnRemove_1,
-                # "btnSelColor": btnSelColor_1,
-                "sldTrans": sldTrans_1
-            }
-
-        self.groupBoxList[self.iGroupBox] = groupBox
-
+        # 그룹을 위한 버튼들 액션 추가
         btnToSpWin_1.clicked.connect(lambda: self._onGroupBoxSubButtonClick(btnToSpWin_1))
         btnRemove_1.clicked.connect(lambda: self._onGroupBoxSubButtonClick(btnRemove_1))
         if not isRaster:
@@ -380,8 +368,27 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
             btnSelColor_1.colorChanged.connect(lambda: self._onGroupBoxColorChanged(btnSelColor_1))
         sldTrans_1.sliderReleased.connect(lambda: self._onGroupBoxSliderReleased(sldTrans_1))
 
+        # 레이어 트리의 제거시 액션 추가
+        layerTreeGroup.setCustomProperty("groupId", self.iGroupBox)
+        groupBox_1.groupId = self.iGroupBox
+
         spacerItem = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.gridLayout_2.addItem(spacerItem, self.iGroupBox, 0, 1, 1)
+
+    def removeLayerTreeByGroupId(self, groupId):
+        if len(self.groupBoxList) <= 0:
+            return
+
+        items = (self.gridLayout_2.itemAt(i) for i in range(self.gridLayout_2.count()))
+        for item in items:
+            widget = item.widget()
+            if isinstance(widget, QMyGroupBox):
+                if widget.groupId == groupId:
+                    try:
+                        self.groupBoxList.pop(groupId)
+                        widget.deleteLater()
+                    except KeyError:
+                        pass
 
     def removeGroupBox(self, groupObj):
         if not groupObj: return

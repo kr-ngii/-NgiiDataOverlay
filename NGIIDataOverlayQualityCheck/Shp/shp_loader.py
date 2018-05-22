@@ -27,23 +27,23 @@ class ShpLoader():
 
         # 그룹부터 만들고
         root = QgsProject.instance().layerTreeRoot()
-        self.parent.mainGroup = root.addGroup(title)
+        layerTreeGroup = root.addGroup(title)
 
         # 하나씩 임포트
         for filePath in fileList:
             try:
-                self.importShp(filePath)
+                self.importShp(filePath, layerTreeGroup)
             except Exception as e:
                 raise e
 
-        self.parent.appendGroupBox()
+        self.parent.appendGroupBox(layerTreeGroup, "shp")
 
 
-    def importShp(self, filePath):
+    def importShp(self, filePath, layerTreeGroup):
         filename, extension = os.path.splitext(os.path.basename(filePath))
 
         # TODO: 좌표계가 없을 가능성에 대비하라
         layer = QgsVectorLayer(filePath, filename, "ogr")
         QgsMapLayerRegistry.instance().addMapLayer(layer, False)
-        self.parent.mainGroup.insertChildNode(1, QgsLayerTreeLayer(layer))
+        layerTreeGroup.insertChildNode(1, QgsLayerTreeLayer(layer))
 

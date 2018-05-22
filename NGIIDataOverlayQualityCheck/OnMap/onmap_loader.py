@@ -146,7 +146,7 @@ class OnMapLoader():
             self.progressMain.setValue(0)
             self.progressSub.setValue(0)
 
-            self.appendGroupBox()
+            self.appendGroupBox(layerTreeGroup, "onmap")
 
             self.isOnProcessing = False
 
