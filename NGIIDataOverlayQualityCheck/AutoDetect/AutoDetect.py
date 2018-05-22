@@ -261,12 +261,19 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
                 curs.execute(sql)
             conn.close()
 
+            tmp_postgres_conn_str = u"host='{}' port='{}' dbname ='{}' user='{}' password='{}'".format(host,
+                                                                                                              port,
+                                                                                                              dbname,
+                                                                                                              user,
+                                                                                                              password)
+
             # Setup extension and EPSG
             try:
-                conn = psycopg2.connect(postgres_postgres_conn_str)
+                print tmp_postgres_conn_str
+                conn = psycopg2.connect(tmp_postgres_conn_str)
                 conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
             except:
-                return u"error database connection: {}".format(postgres_postgres_conn_str)
+                return u"error database connection: {}".format(tmp_postgres_conn_str)
 
             curs = conn.cursor()
             curs.execute("SELECT extname FROM pg_extension WHERE extname = 'postgis'")
@@ -391,7 +398,7 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
             originGeomType = self.selectGeometryType(self.ORIGIN_SCHEMA, editTable)
             editGeomType = self.selectGeometryType(self.EDIT_SCHEMA, editTable)
 
-            if originGeomType != editGeomType:
+            if originGeomType == '' or editGeomType == '' or originGeomType != editGeomType:
                 self.parent.error(u'{table}의 도형타입이 기준 데이터와 일치하지 않습니다.'.format(table=editTable))
                 continue
 
@@ -420,6 +427,7 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
         self.lblStatus.setText(u"결과 불러오는 중 ... ")
         self.addLayers()
 
+        self.progressMain.setMaximum(10)
         self.lblStatus.setText(u"변화내용 자동탐지 완료 ")
         self.parent.info(u"변화내용 자동탐지 완료 ")
 
@@ -1111,7 +1119,8 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
         canvas.mapRenderer().setDestinationCrs(QgsCoordinateReferenceSystem(5179))
 
         tableList = self.selectTableList(self.EDIT_SCHEMA)
-        tableList.remove('inspect_obj')
+        if 'inspect_obj' in tableList:
+            tableList.remove('inspect_obj')
 
         for table in tableList:
 
