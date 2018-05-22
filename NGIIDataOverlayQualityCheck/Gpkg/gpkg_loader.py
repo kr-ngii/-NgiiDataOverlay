@@ -39,6 +39,7 @@ class GpkgLoader():
         gpkg = None
 
         try:
+            # TODO: 속도 향상에 아래 문장이 매우 중요. 다른 곳에도 적용하자!!
             gdal.SetConfigOption('OGR_SQLITE_SYNCHRONOUS', 'OFF')
             gpkg = ogr.Open(filePath)
             if not gpkg:

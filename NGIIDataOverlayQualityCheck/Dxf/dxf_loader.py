@@ -67,7 +67,6 @@ class DxfLoader():
             # TODO: 좌표계 안물어보게 하기
             # https://gis.stackexchange.com/questions/183045/how-to-set-crs-for-a-dxf-file-and-prevent-any-warning-on-qgis-using-pyqgis
             dxfLayer = QgsVectorLayer(filePath, None, "ogr")
-            self.alert(u"AFRER LOAD DXF")
 
             if not dxfLayer:
                 raise Exception()
@@ -137,8 +136,7 @@ class DxfLoader():
 
         else:
             if entityType == "point":
-                outLayerName = u"{}_Point".format(layerFullName)
-                vPointLayer = QgsVectorLayer("Point?crs={}".format(self.crsWkt), outLayerName, "memory")
+                vPointLayer = QgsVectorLayer("Point?crs={}".format(self.crsWkt), layerFullName, "memory")
                 vPointLayer.dataProvider().addAttributes([QgsField("Linetype", QVariant.String)])
                 vPointLayer.dataProvider().addAttributes([QgsField("EntityHandle", QVariant.String)])
                 vPointLayer.dataProvider().addAttributes([QgsField("Text", QVariant.String)])
@@ -147,8 +145,7 @@ class DxfLoader():
                 self.debug(u"layerName:" + layerFullName)
                 vLayer = vPointLayer
             elif entityType == "line":
-                outLayerName = u"{}_Line".format(layerFullName)
-                vLineLayer = QgsVectorLayer("LineString?crs={}".format(self.crsWkt), outLayerName, "memory")
+                vLineLayer = QgsVectorLayer("LineString?crs={}".format(self.crsWkt), layerFullName, "memory")
                 vLineLayer.dataProvider().addAttributes([QgsField("Linetype", QVariant.String)])
                 vLineLayer.dataProvider().addAttributes([QgsField("EntityHandle", QVariant.String)])
                 vLineLayer.dataProvider().addAttributes([QgsField("Text", QVariant.String)])
