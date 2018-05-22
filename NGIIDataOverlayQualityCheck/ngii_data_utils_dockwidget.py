@@ -36,7 +36,7 @@ from OnMap import OnMapLoader
 from Shp import ShpLoader
 from Gpkg import GpkgLoader
 from Dxf import DxfLoader
-
+from Image import ImageLoader
 
 class QMyGroupBox(QGroupBox):
     groupId = None
@@ -58,6 +58,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
     _shpLoader = None
     _gpkgLoader = None
     _dxfLoader = None
+    _imageLoader = None
 
     _orgColor = None
     _last_opened_folder = None
@@ -184,6 +185,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         self._shpLoader = ShpLoader(self.iface, self)
         self._gpkgLoader = GpkgLoader(self.iface, self)
         self._dxfLoader = DxfLoader(self.iface, self)
+        self._imageLoader = ImageLoader(self.iface, self)
 
     def _on_click_btnAutoDetect(self):
         res = self._autoDetecter.checkEnv()
@@ -253,16 +255,26 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
                 self._dxfLoader.runImport(vectorPath)
 
     def _on_click_btnLoadImage(self):
-        rasterPath = QFileDialog.getOpenFileName(caption=u"국토지리정보 영상 파일 선택", filter=u"국토지리정보 영상 파일(*.img *.tif)", options=QFileDialog.DontUseNativeDialog)
-        if rasterPath is None:
+        dialog = QtGui.QFileDialog(self)
+        dialog.setFileMode(QtGui.QFileDialog.ExistingFiles)
+
+        if self._last_opened_folder is not None:
+            dialog.setDirectory(self._last_opened_folder)
+        # dialog.setFileMode(QtGui.QFileDialog.Directory )
+
+        filters = [u"국토지리정보 영상 파일(*.img *.tif)"]
+        dialog.setNameFilters(filters)
+
+        if (dialog.exec_()):
+            fileList = dialog.selectedFiles()
+        else:
             return
 
-        filename, extension = os.path.splitext(rasterPath)
+        for rasterPath in fileList:
+            filename, extension = os.path.splitext(rasterPath)
 
-        if extension.lower() == ".img":
-            pass
-        elif extension.lower() == ".tif":
-            pass
+            if extension.lower() == ".img" or extension.lower() == ".tif":
+                self._imageLoader.runImport(rasterPath)
 
     def _on_click_btnLoadTms(self):
         pass

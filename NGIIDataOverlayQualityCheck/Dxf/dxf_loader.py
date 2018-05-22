@@ -57,16 +57,23 @@ class DxfLoader():
         crs.ImportFromEPSG(5186)
         self.crsWkt = crs.ExportToWkt()
 
+        # 좌표계 안물어보게 하기
+        # https://gis.stackexchange.com/questions/80025/accessing-qgis-program-settings-programmatically
         QgsApplication.setOverrideCursor(Qt.WaitCursor)
+        settings = QSettings()
+        # Take the "CRS for new layers" config, overwrite it while loading layers and...
+        oldProjValue = settings.value("/Projections/defaultBehaviour", "prompt", type=str)
+        settings.setValue("/Projections/defaultBehaviour", "useProject")
 
         dxfLayer = None
         try:
             self.info(u"DXF에서 정보 추출 시작...")
             self.progText(u"DXF에서 정보 추출 중")
 
-            # TODO: 좌표계 안물어보게 하기
-            # https://gis.stackexchange.com/questions/183045/how-to-set-crs-for-a-dxf-file-and-prevent-any-warning-on-qgis-using-pyqgis
             dxfLayer = QgsVectorLayer(filePath, None, "ogr")
+            crs = dxfLayer.crs()
+            crs.createFromId(5186)
+            dxfLayer.setCrs(crs)
 
             if not dxfLayer:
                 raise Exception()
@@ -122,6 +129,7 @@ class DxfLoader():
         finally:
             self.progressSub.setValue(0)
             self.progText(u"DXF에서 정보 추출 완료")
+            settings.setValue("/Projections/defaultBehaviour", oldProjValue)
 
             QgsApplication.restoreOverrideCursor()
             self.progressSub.setValue(0)
