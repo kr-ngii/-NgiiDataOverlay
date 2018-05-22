@@ -59,6 +59,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
     _orgColor = None
     _last_opened_folder = None
+    _willRemoveGroupIds = None
 
     iGroupBox = 0
     groupBoxList = None
@@ -144,17 +145,36 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         self.connect(self.btnReportError, SIGNAL("clicked()"), self._on_click_btnReportError)
 
         root = QgsProject.instance().layerTreeRoot()
-        # root.removedChildren.connect(self.onRemovedChildren)  ## 이 이벤트는 제거된 후에 남은 것을 찾을 수 있음
-        root.willRemoveChildren.connect(self.onWillRemovedChildren)
+        root.willRemoveChildren.connect(self.onWillRemoveChildren)
+        root.removedChildren.connect(self.onRemovedChildren)  ## 이 이벤트는 제거된 후에 남은 것을 찾을 수 있음
 
-    def onWillRemovedChildren(self, node, indexFrom, indexTo):
+    def onWillRemoveChildren(self, node, indexFrom, indexTo):
+        self.debug("[Will] indexFrom: {}, indexTo:{}".format(indexFrom, indexTo))
+        self._willRemoveGroupIds = list()
+
+        # 제거 예정인 그룹박스 ID 확보
         children = node.children()[indexFrom : indexTo + 1]
-        # children = node.children()
         for realNode in children:
             groupId = realNode.customProperty("groupId")
             if groupId is not None:
-                self.debug("Remove GroupID: {}".format(groupId))
-                self.removeLayerTreeByGroupId(groupId)
+                self._willRemoveGroupIds.append(int(groupId))
+
+    def onRemovedChildren(self, node, indexFrom, indexTo):
+        self.debug("[remover] indexFrom: {}, indexTo:{}".format(indexFrom, indexTo))
+        remainedGroupIds = list()
+
+        # 남아있는 그룹박스 ID 확보
+        children = node.children()
+        for realNode in children:
+            groupId = realNode.customProperty("groupId")
+            if groupId is not None:
+                remainedGroupIds.append(int(groupId))
+
+        # 트리 그룹이 단순히 이동되었을 때를 위해 삭제 표시된 것 중 남아있는 것 제외하고 제거 실행
+        removedGroupIds = [item for item in self._willRemoveGroupIds if item not in remainedGroupIds]
+        for groupId in removedGroupIds:
+            self.debug("Remove GroupID: {}".format(groupId))
+            self.removeLayerTreeByGroupId(groupId)
 
     def _createLoader(self):
         self._onMapLoader = OnMapLoader(self.iface, self)
@@ -260,7 +280,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
     def getNewLayerTitle(self, title):
         dupeCount = 0
 
-        filter = ur"{}(\d*)".format(title)
+        filter = u"{}(\\d*)".format(title)
         for key in self.groupBoxList:
             groupBox = self.groupBoxList[key]
             if re.match(filter, title):
@@ -321,8 +341,6 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(btnRemove_1.sizePolicy().hasHeightForWidth())
         btnRemove_1.setSizePolicy(sizePolicy)
-        btnRemove_1.setMinimumSize(QSize(30, 0))
-        btnRemove_1.setMaximumSize(QSize(30, 16777215))
         btnRemove_1.setObjectName("btnRemove_{}".format(self.iGroupBox))
         horLayout1_1.addWidget(btnRemove_1)
         gridLayout.addLayout(horLayout1_1, 0, 0, 1, 1)
@@ -342,8 +360,8 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         gridLayout.addLayout(horLayout2_1, 1, 0, 1, 1)
 
         groupBox_1.setTitle(title)
-        btnToSpWin_1.setText(u"분할창으로 띄우기")
-        btnRemove_1.setText(u"제거")
+        btnToSpWin_1.setText(u"분할창으로")
+        btnRemove_1.setText(u"한번에 제거")
         lblTrans_1.setText(u"투명도:")
 
         if not isRaster:
