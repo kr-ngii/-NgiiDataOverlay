@@ -3,6 +3,8 @@
 import os
 from qgis.core import *
 from osgeo import ogr
+from PyQt4.QtCore import Qt
+from .. calc_utils import force_gui_update
 
 ogr.UseExceptions()
 
@@ -18,26 +20,33 @@ class ShpLoader():
     def runImport(self, fileList):
         if len(fileList) <= 0: return
 
-        # 그룹명을 폴더명으로
-        title = os.path.basename(os.path.split(fileList[0])[0])
-        if title == "":
-            title = u"ESRI Shape"
+        try:
 
-        title = self.parent.getNewGroupTitle(title)
+            # 그룹명을 폴더명으로
+            title = os.path.basename(os.path.split(fileList[0])[0])
+            if title == "":
+                title = u"ESRI Shape"
 
-        # 그룹부터 만들고
-        root = QgsProject.instance().layerTreeRoot()
-        layerTreeGroup = root.addGroup(title)
+            title = self.parent.getNewGroupTitle(title)
 
-        # 하나씩 임포트
-        for filePath in fileList:
-            try:
-                self.importShp(filePath, layerTreeGroup)
-            except Exception as e:
-                raise e
+            # 그룹부터 만들고
+            root = QgsProject.instance().layerTreeRoot()
+            layerTreeGroup = root.addGroup(title)
 
-        self.parent.appendGroupBox(layerTreeGroup, "shp")
+            # 하나씩 임포트
+            for filePath in fileList:
+                force_gui_update()
+                try:
+                    self.importShp(filePath, layerTreeGroup)
+                except Exception as e:
+                    raise e
 
+            self.parent.appendGroupBox(layerTreeGroup, "shp")
+
+        except Exception as e:
+            raise e
+        finally:
+            QgsApplication.restoreOverrideCursor()
 
     def importShp(self, filePath, layerTreeGroup):
         filename, extension = os.path.splitext(os.path.basename(filePath))

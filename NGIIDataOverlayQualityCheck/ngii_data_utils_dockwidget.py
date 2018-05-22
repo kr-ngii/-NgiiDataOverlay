@@ -31,6 +31,7 @@ from qgis.core import *
 import re
 
 # from ngii_data_utils_dockwidget_base import Ui_NgiiDataUtilsDockWidgetBase
+from AutoDetect import AutoDetect
 from OnMap import OnMapLoader
 from Shp import ShpLoader
 from Gpkg import GpkgLoader
@@ -52,6 +53,7 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
     closingPlugin = pyqtSignal()
 
+    _autoDetecter = None
     _onMapLoader = None
     _shpLoader = None
     _gpkgLoader = None
@@ -177,6 +179,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
             self.removeLayerTreeByGroupId(groupId)
 
     def _createLoader(self):
+        self._autoDetecter = AutoDetect(self.iface, self)
         self._onMapLoader = OnMapLoader(self.iface, self)
         self._shpLoader = ShpLoader(self.iface, self)
         self._gpkgLoader = GpkgLoader(self.iface, self)
@@ -335,14 +338,14 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         btnToSpWin_1 = QPushButton(groupBox_1)
         btnToSpWin_1.setObjectName("btnToSpWin_{}".format(self.iGroupBox))
         horLayout1_1.addWidget(btnToSpWin_1)
-        btnRemove_1 = QPushButton(groupBox_1)
+        # btnRemove_1 = QPushButton(groupBox_1)
         sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(btnRemove_1.sizePolicy().hasHeightForWidth())
-        btnRemove_1.setSizePolicy(sizePolicy)
-        btnRemove_1.setObjectName("btnRemove_{}".format(self.iGroupBox))
-        horLayout1_1.addWidget(btnRemove_1)
+        # sizePolicy.setHeightForWidth(btnRemove_1.sizePolicy().hasHeightForWidth())
+        # btnRemove_1.setSizePolicy(sizePolicy)
+        # btnRemove_1.setObjectName("btnRemove_{}".format(self.iGroupBox))
+        # horLayout1_1.addWidget(btnRemove_1)
         gridLayout.addLayout(horLayout1_1, 0, 0, 1, 1)
 
         horLayout2_1 = QHBoxLayout()
@@ -360,8 +363,8 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         gridLayout.addLayout(horLayout2_1, 1, 0, 1, 1)
 
         groupBox_1.setTitle(title)
-        btnToSpWin_1.setText(u"분할창으로")
-        btnRemove_1.setText(u"한번에 제거")
+        btnToSpWin_1.setText(u"분할창에 띄우기")
+        # btnRemove_1.setText(u"한번에 제거")
         lblTrans_1.setText(u"투명도:")
 
         if not isRaster:
@@ -380,7 +383,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
         # 그룹을 위한 버튼들 액션 추가
         btnToSpWin_1.clicked.connect(lambda: self._onGroupBoxSubButtonClick(btnToSpWin_1))
-        btnRemove_1.clicked.connect(lambda: self._onGroupBoxSubButtonClick(btnRemove_1))
+        # btnRemove_1.clicked.connect(lambda: self._onGroupBoxSubButtonClick(btnRemove_1))
         if not isRaster:
             btnSelColor_1.clicked.connect(lambda: self._onGroupBoxColorButtonClick(btnSelColor_1))
             btnSelColor_1.colorChanged.connect(lambda: self._onGroupBoxColorChanged(btnSelColor_1))
@@ -503,7 +506,8 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
                         symbol = QgsLineSymbolV2().createSimple({'color': colorText})
                     # elif geomType == QGis.Polygon:
                     elif geomType == 2:
-                        symbol = QgsFillSymbolV2().createSimple({'color': colorText, 'outline_color': colorText, 'style': 'x'})
+                        # TODO: 패턴이 먹게 수정 필요
+                        symbol = QgsFillSymbolV2().createSimple({'color': colorText, 'outline_color': colorText, 'name': 'x'})
                     else:
                         continue
 
