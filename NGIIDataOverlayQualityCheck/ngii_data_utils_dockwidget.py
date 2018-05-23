@@ -29,6 +29,7 @@ from PyQt4 import QtGui, uic
 from qgis.gui import QgsColorButton
 from qgis.core import *
 import re
+from osgeo import gdal
 
 # from ngii_data_utils_dockwidget_base import Ui_NgiiDataUtilsDockWidgetBase
 from AutoDetect import AutoDetect
@@ -38,10 +39,8 @@ from Gpkg import GpkgLoader
 from Dxf import DxfLoader
 from Image import ImageLoader
 
-from TmsForKorea.openlayers_overview import OLOverview
-from TmsForKorea.openlayers_layer import OpenlayersLayer
-from TmsForKorea.openlayers_plugin_layer_type import OpenlayersPluginLayerType
-from TmsForKorea.weblayers.weblayer_registry import WebLayerTypeRegistry
+from TmsForKorea.weblayers.daum_maps import OlDaumStreetLayer, OlDaumHybridLayer, OlDaumSatelliteLayer, OlDaumPhysicalLayer, OlDaumCadstralLayer
+from TmsForKorea.weblayers.naver_maps import OlNaverStreetLayer, OlNaverHybridLayer, OlNaverSatelliteLayer, OlNaverPhysicalLayer, OlNaverCadastralLayer
 from TmsForKorea.weblayers.ngii_maps import OlNgiiStreetLayer
 
 from DockableMirrorMap.dockableMirrorMap import DockableMirrorMap
@@ -93,7 +92,6 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
         self.groupBoxList = dict()
 
-        self._olLayerTypeRegistry = WebLayerTypeRegistry(self)
         self.dockableMirrors = []
         self.lastDockableMirror = 0
 
@@ -284,19 +282,45 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
                 self._imageLoader.runImport(rasterPath)
 
     def _on_click_btnLoadTms(self):
-        # tms = OlNgiiStreetLayer()
-        # tms.addLayer()
+        # xml = """<GDAL_WMS>
+        # <Service name="TMS">
+        #   <ServerUrl>http://localhost/cgi-bin/tms.py?${x}/${y}/${z}</ServerUrl>
+        #   <ImageFormat>image/png</ImageFormat>
+        #   <SRS>EPSG:5179</SRS>
+        # </Service>
+        # <DataWindow>
+        #   <UpperLeftX>-200000.0</UpperLeftX>
+        #   <UpperLeftY>4000000.0</UpperLeftY>
+        #   <LowerRightX>31824123.62</LowerRightX>
+        #   <LowerRightY>-28024123.62</LowerRightY>
+        #   <TileLevel>14</TileLevel>
+        #   <YOrigin>bottom</YOrigin>
+        # </DataWindow>
+        # <Projection>EPSG:5179</Projection>
+        # <BlockSizeX>256</BlockSizeX>
+        # <BlockSizeY>256</BlockSizeY>
+        # <BandsCount>3</BandsCount>
+        # <ZeroBlockHttpCodes>204,403,404,500,502,503,504</ZeroBlockHttpCodes>
+        # <Cache>
+        #         <Path>/temp/tms</Path>
+        # </Cache>
+        # </GDAL_WMS>"""
+        #
+        # vfn = "/vsimem/ngii.xml"
+        # gdal.FileFromMemBuffer(vfn, xml)
+        #
+        # rasterLyr = QgsRasterLayer(vfn, u"국가인터넷지도")
+        # rasterLyr.isValid()
+        # QgsMapLayerRegistry.instance().addMapLayers([rasterLyr])
 
-        self._olMenu = QMenu("TMS for Korea")
-        self._olLayerTypeRegistry.register(OlNgiiStreetLayer())
-        for group in self._olLayerTypeRegistry.groups():
-            groupMenu = group.menu()
-            for layer in self._olLayerTypeRegistry.groupLayerTypes(group):
-                layer.addMenuEntry(groupMenu, self.iface.mainWindow())
-            self._olMenu.addMenu(groupMenu)
-
-        self._menu = self.iface.webMenu()
-        self._menu.addMenu(self._olMenu)
+        from qgis import utils
+        try:
+            internetMap = utils.plugins['tmsforkorea']
+            # internetMap.addNgiiMap()
+            # internetMap.addLayer(OlNgiiStreetLayer())
+            internetMap.addLayer(OlDaumStreetLayer())
+        except:
+            pass
 
     def loadWms(self, layerList, title):
         layersText = u"&layers=".join(layerList)
