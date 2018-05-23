@@ -20,7 +20,7 @@ class GpkgLoader():
     def runImport(self, filePath):
         # 그룹부터 만들고
         filename, _ = os.path.splitext(os.path.basename(filePath))
-        title = self.parent.getNewGroupTitle(filename)
+        title = self.parent.getNewGroupTitle(u"[GPKG]" + filename)
 
         root = QgsProject.instance().layerTreeRoot()
         layerTreeGroup = root.addGroup(title)
@@ -58,4 +58,6 @@ class GpkgLoader():
             raise e
         finally:
             QgsApplication.restoreOverrideCursor()
+            self.progressMain.setValue(0)
+            self.progressSub.setValue(0)
             del gpkg

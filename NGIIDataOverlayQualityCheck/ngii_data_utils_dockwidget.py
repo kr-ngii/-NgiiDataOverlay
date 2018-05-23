@@ -29,7 +29,11 @@ from PyQt4 import QtGui, uic
 from qgis.gui import QgsColorButton
 from qgis.core import *
 import re
-from osgeo import gdal
+import tempfile
+import urllib2
+from PIL import Image
+import json
+from subprocess import call
 
 # from ngii_data_utils_dockwidget_base import Ui_NgiiDataUtilsDockWidgetBase
 from AutoDetect import AutoDetect
@@ -42,6 +46,7 @@ from Image import ImageLoader
 from TmsForKorea.weblayers.daum_maps import OlDaumStreetLayer, OlDaumHybridLayer, OlDaumSatelliteLayer, OlDaumPhysicalLayer, OlDaumCadstralLayer
 from TmsForKorea.weblayers.naver_maps import OlNaverStreetLayer, OlNaverHybridLayer, OlNaverSatelliteLayer, OlNaverPhysicalLayer, OlNaverCadastralLayer
 from TmsForKorea.weblayers.ngii_maps import OlNgiiStreetLayer
+from dlg_report_error import DlgReportError
 
 from DockableMirrorMap.dockableMirrorMap import DockableMirrorMap
 
@@ -88,7 +93,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         self.iface = iface
         self._connect_action()
         self._createLoader()
-        self.btnReportError.hide()
+        # self.btnReportError.hide()
 
         self.groupBoxList = dict()
 
@@ -320,7 +325,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
             # internetMap.addLayer(OlNgiiStreetLayer())
             internetMap.addLayer(OlDaumStreetLayer())
         except:
-            pass
+            raise Exception(u"TmsForKorea 플러그인을 먼저 설치하셔야 합니다.")
 
     def loadWms(self, layerList, title):
         layersText = u"&layers=".join(layerList)
@@ -367,7 +372,69 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
     def _on_click_btnReportError(self):
         # TODO: remove
-        self.connectRemoteDebugger()
+        if self.displayDebug:
+            self.connectRemoteDebugger()
+        else:
+            self.enterReasion()
+
+    def enterReasion(self):
+        dlg = DlgReportError(self)
+        if not dlg.exec_():
+            return
+
+        _, tempFilePath = tempfile.mkstemp(".png")
+        self.iface.mapCanvas().saveAsImage(tempFilePath)
+        self.debug(tempFilePath)
+
+        with open(tempFilePath, "rb") as imgFile:
+            imgStr = imgFile.read().encode('base64')
+
+        # 썸네일 생성
+        tnImgPath = "{}_tn.png".format(os.path.splitext(tempFilePath)[0])
+        size = (256, 256)
+        try:
+            im = Image.open(tempFilePath)
+            im.thumbnail(size, Image.ANTIALIAS)
+            im.save(tnImgPath)
+
+            result = True
+        except IOError:
+            return
+
+        with open(tnImgPath, "rb") as imgFile:
+            imgTnStr = imgFile.read().encode('base64')
+
+        imgExtent = self.iface.mapCanvas().extent()
+
+        # API 호출
+        saveUrl = 'http://seoul.gaia3d.com:8989/kqiweb/'
+        restapiUrl = saveUrl + 'kqi/insert_overlay.do'
+
+        savaData = {
+            "insTargetNm": "", # 오버레이 대상명 리스트
+            "insResult": dlg.lineEdit.text(),
+            "imgNm": os.path.basename(tempFilePath),
+            "img": imgStr,
+            "imgTn": imgTnStr,
+            "minX": round(imgExtent.xMinimum(), 2),
+            "minY": round(imgExtent.yMinimum(), 2),
+            "maxX": round(imgExtent.xMaximum(), 2),
+            "maxY": round(imgExtent.yMaximum(), 2)
+        }
+
+        try:
+            request = urllib2.Request(restapiUrl, json.dumps(savaData),
+                                      {'Content-Type': 'application/json'})
+            response = urllib2.urlopen(request)
+
+            res_code = response.getcode()
+            if res_code != 200:
+                self.logger.warning(response.info())
+                return result
+
+        except Exception as e:
+            return
+
 
     def getNewGroupTitle(self, title):
         dupeCount = 0
@@ -555,6 +622,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
         treeNode = groupObj["treeItem"]
         self.addGroupToSplitWindow(treeNode, wdg)
+        treeNode.setVisible(Qt.Unchecked)
 
 
     def addGroupToSplitWindow(self, treeNode, wdg):

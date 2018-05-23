@@ -36,7 +36,7 @@ class DxfLoader():
     def runImport(self, filePath):
         # 그룹부터 만들고
         filename, _ = os.path.splitext(os.path.basename(filePath))
-        title = self.parent.getNewGroupTitle(filename)
+        title = self.parent.getNewGroupTitle(u"[DXF]"+filename)
 
         root = QgsProject.instance().layerTreeRoot()
         layerTreeGroup = root.addGroup(title)
@@ -130,6 +130,8 @@ class DxfLoader():
             self.progressSub.setValue(0)
             self.progText(u"DXF에서 정보 추출 완료")
             settings.setValue("/Projections/defaultBehaviour", oldProjValue)
+            self.progressMain.setValue(0)
+            self.progressSub.setValue(0)
 
             QgsApplication.restoreOverrideCursor()
             self.progressSub.setValue(0)

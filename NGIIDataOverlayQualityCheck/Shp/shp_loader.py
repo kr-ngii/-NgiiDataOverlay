@@ -35,7 +35,7 @@ class ShpLoader():
             if title == "":
                 title = u"ESRI Shape"
 
-            title = self.parent.getNewGroupTitle(title)
+            title = self.parent.getNewGroupTitle(u"[SHP]" + title)
 
             # 그룹부터 만들고
             root = QgsProject.instance().layerTreeRoot()
@@ -54,6 +54,9 @@ class ShpLoader():
         finally:
             settings.setValue("/Projections/defaultBehaviour", oldProjValue)
             QgsApplication.restoreOverrideCursor()
+
+            self.progressMain.setValue(0)
+            self.progressSub.setValue(0)
 
     def importShp(self, filePath, layerTreeGroup):
         filename, extension = os.path.splitext(os.path.basename(filePath))

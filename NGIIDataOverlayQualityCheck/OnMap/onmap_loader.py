@@ -127,7 +127,7 @@ class OnMapLoader():
             root = QgsProject.instance().layerTreeRoot()
             filename, extension = os.path.splitext(os.path.basename(self.pdfPath))
 
-            groupTitle = self.parent.getNewGroupTitle(filename)
+            groupTitle = self.parent.getNewGroupTitle(u"[PDF]"+filename)
 
             layerTreeGroup = root.addGroup(groupTitle)
 
@@ -752,6 +752,8 @@ class OnMapLoader():
         finally:
             QgsApplication.restoreOverrideCursor()
             self.iface.mapCanvas().refresh()
+            self.progressMain.setValue(0)
+            self.progressSub.setValue(0)
             force_gui_update()
 
         self.info(u"영상 가져오기 완료")

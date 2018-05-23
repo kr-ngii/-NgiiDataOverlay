@@ -28,14 +28,14 @@ class ImageLoader():
     def runImport(self, filePath):
         # 그룹부터 만들고
         filename, ext = os.path.splitext(os.path.basename(filePath))
-        title = self.parent.getNewGroupTitle(filename)
+        title = self.parent.getNewGroupTitle(u"[IMG]"+filename)
 
         root = QgsProject.instance().layerTreeRoot()
         layerTreeGroup = root.addGroup(title)
 
         self.importImg(filePath, layerTreeGroup)
 
-        self.parent.appendGroupBox(layerTreeGroup, ext)
+        self.parent.appendGroupBox(layerTreeGroup, ext.lstrip("."))
 
     def importImg(self, filePath, layerTreeGroup):
         # TODO: 파일명에서 좌표계를 찾아라!
@@ -67,6 +67,8 @@ class ImageLoader():
             self.progressSub.setValue(0)
             self.progText(u"DXF에서 정보 추출 완료")
             settings.setValue("/Projections/defaultBehaviour", oldProjValue)
+            self.progressMain.setValue(0)
+            self.progressSub.setValue(0)
 
             QgsApplication.restoreOverrideCursor()
             self.progressSub.setValue(0)
