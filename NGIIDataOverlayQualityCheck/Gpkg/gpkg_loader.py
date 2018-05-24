@@ -16,6 +16,19 @@ class GpkgLoader():
     def __init__(self, iface, parent):
         self.iface = iface
         self.parent = parent
+        try:
+            self.progressMain = parent.prgMain
+            self.progressSub = parent.prgSub
+
+            self.info = parent.info
+            self.error = parent.error
+            self.debug = parent.debug
+            self.comment = parent.comment
+            self.progText = parent.progText
+            self.alert = parent.alert
+        except Exception as e:
+            raise e
+
 
     def runImport(self, filePath):
         # 그룹부터 만들고
