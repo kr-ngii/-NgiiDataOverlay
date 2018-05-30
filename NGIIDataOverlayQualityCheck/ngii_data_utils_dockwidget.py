@@ -408,7 +408,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
         # API 호출
         saveUrl = 'http://seoul.gaia3d.com:8989/kqiweb/'
-        restapiUrl = saveUrl + 'kqi/insert_overlay.do'
+        restapiUrl = saveUrl + 'kgi/insert_overlay.do'
 
         savaData = {
             "insTargetNm": "", # 오버레이 대상명 리스트
