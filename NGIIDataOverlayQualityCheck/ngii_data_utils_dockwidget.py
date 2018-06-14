@@ -80,7 +80,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
     iGroupBox = 0
     groupBoxList = None
 
-    displayDebug = False
+    displayDebug = True
     displayInfo = True
     displayComment = True
     displayError = True
@@ -160,8 +160,8 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         self.connect(self.btnLoadImage, SIGNAL("clicked()"), self._on_click_btnLoadImage)
         self.connect(self.btnLoadTms, SIGNAL("clicked()"), self._on_click_btnLoadTms)
         self.connect(self.btnLoadBaseMap, SIGNAL("clicked()"), self._on_click_btnLoadBaseMap)
-        self.connect(self.btnLoadOnmapBaseMap, SIGNAL("clicked()"), self._on_click_btnLoadOnmapBaseMap)
-        self.connect(self.btnLoadInternetBaseMap, SIGNAL("clicked()"), self._on_click_btnLoadInternetBaseMap)
+        # self.connect(self.btnLoadOnmapBaseMap, SIGNAL("clicked()"), self._on_click_btnLoadOnmapBaseMap)
+        # self.connect(self.btnLoadInternetBaseMap, SIGNAL("clicked()"), self._on_click_btnLoadInternetBaseMap)
         self.connect(self.btnReportError, SIGNAL("clicked()"), self._on_click_btnReportError)
 
         root = QgsProject.instance().layerTreeRoot()
@@ -348,30 +348,29 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         layerList = ["tn_shorline","tn_lkmh", "tn_river_bt","tn_river_bndry","tn_river_ctln", "tn_fmlnd_bndry","tn_rodway_bndry","tn_rodway_ctln","tn_ctrln","tn_buld_adcls","tn_buld"]
         self.loadWms(layerList, u'국토기본정보(전체)')
 
-    def _on_click_btnLoadOnmapBaseMap(self):
-        canvas = self.iface.mapCanvas()
-        scale = canvas.scale()
-        if scale > 50000:
-            self.alert(u"1:50,000 보다 크게 확대하셔야 사용 가능합니다.")
-            return
+    # def _on_click_btnLoadOnmapBaseMap(self):
+    #     canvas = self.iface.mapCanvas()
+    #     scale = canvas.scale()
+    #     if scale > 50000:
+    #         self.alert(u"1:50,000 보다 크게 확대하셔야 사용 가능합니다.")
+    #         return
+    #
+    #     # layerList = ["tn_river_bt","tn_fmlnd_bndry","tn_rodway_bndry","tn_arrfc","tn_ctrln","tn_emd_bndry","tn_signgu_bndry","tn_ctprvn_bndry","tn_buld"]
+    #     layerList = ["tn_river_bt","tn_fmlnd_bndry","tn_rodway_bndry","tn_rodway_ctln","tn_ctrln","tn_buld"]
+    #     self.loadWms(layerList, u'국토기본정보(온맵해당)')
 
-        # layerList = ["tn_river_bt","tn_fmlnd_bndry","tn_rodway_bndry","tn_arrfc","tn_ctrln","tn_emd_bndry","tn_signgu_bndry","tn_ctprvn_bndry","tn_buld"]
-        layerList = ["tn_river_bt","tn_fmlnd_bndry","tn_rodway_bndry","tn_rodway_ctln","tn_ctrln","tn_buld"]
-        self.loadWms(layerList, u'국토기본정보(온맵해당)')
-
-    def _on_click_btnLoadInternetBaseMap(self):
-        canvas = self.iface.mapCanvas()
-        scale = canvas.scale()
-        if scale > 50000:
-            self.alert(u"1:50,000 보다 크게 확대하셔야 사용 가능합니다.")
-            return
-
-        # layerList = ["tn_shorline","tn_river_bt","tn_river_bndry","tn_river_ctln", "tn_fmlnd_bndry","tn_rodway_bndry","tn_rodway_ctln","tn_arrfc","tn_ctrln","tn_emd_bndry","tn_signgu_bndry","tn_ctprvn_bndry","tn_buld"]
-        layerList = ["tn_shorline","tn_river_bt","tn_river_bndry","tn_river_ctln", "tn_fmlnd_bndry","tn_rodway_bndry","tn_rodway_ctln","tn_ctrln","tn_buld"]
-        self.loadWms(layerList, u'국토기본정보(인터넷지도해당)')
+    # def _on_click_btnLoadInternetBaseMap(self):
+    #     canvas = self.iface.mapCanvas()
+    #     scale = canvas.scale()
+    #     if scale > 50000:
+    #         self.alert(u"1:50,000 보다 크게 확대하셔야 사용 가능합니다.")
+    #         return
+    #
+    #     # layerList = ["tn_shorline","tn_river_bt","tn_river_bndry","tn_river_ctln", "tn_fmlnd_bndry","tn_rodway_bndry","tn_rodway_ctln","tn_arrfc","tn_ctrln","tn_emd_bndry","tn_signgu_bndry","tn_ctprvn_bndry","tn_buld"]
+    #     layerList = ["tn_shorline","tn_river_bt","tn_river_bndry","tn_river_ctln", "tn_fmlnd_bndry","tn_rodway_bndry","tn_rodway_ctln","tn_ctrln","tn_buld"]
+    #     self.loadWms(layerList, u'국토기본정보(인터넷지도해당)')
 
     def _on_click_btnReportError(self):
-        # TODO: remove
         if self.displayDebug:
             self.connectRemoteDebugger()
         else:
