@@ -30,10 +30,10 @@ class DxfLoader():
         self.progText = parent.progText
         self.alert = parent.alert
 
+    def runImport(self, filePath):
         self.layerCountDict = dict()
         self.layerListDict = dict()
 
-    def runImport(self, filePath):
         # 그룹부터 만들고
         filename, _ = os.path.splitext(os.path.basename(filePath))
         title = self.parent.getNewGroupTitle(u"[DXF]"+filename)
