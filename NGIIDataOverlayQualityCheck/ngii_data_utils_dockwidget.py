@@ -42,6 +42,7 @@ from Shp import ShpLoader
 from Gpkg import GpkgLoader
 from Dxf import DxfLoader
 from Image import ImageLoader
+import socket
 
 from TmsForKorea.weblayers.daum_maps import OlDaumStreetLayer, OlDaumHybridLayer, OlDaumSatelliteLayer, OlDaumPhysicalLayer, OlDaumCadstralLayer
 from TmsForKorea.weblayers.naver_maps import OlNaverStreetLayer, OlNaverHybridLayer, OlNaverSatelliteLayer, OlNaverPhysicalLayer, OlNaverCadastralLayer
@@ -100,6 +101,15 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         self.dockableMirrors = []
         self.lastDockableMirror = 0
 
+        ip = socket.gethostbyname(socket.gethostname())
+        # TODO: 지리원 내부 IP 확인
+        if re.match(r"172\..*", ip) is not None:
+            self.btnLoadTms.setVisible(False)
+            self.btnLoadBaseMap.setVisible(True)
+        else:
+            self.btnLoadTms.setVisible(True)
+            self.btnLoadBaseMap.setVisible(False)
+
     def connectRemoteDebugger(self):
         try:
             import pydevd
@@ -149,7 +159,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         msg = QMessageBox()
         msg.setIcon(icon)
         msg.setText(text)
-        msg.setWindowTitle(u"국토기본정보 데이터 중첩검사 유틸")
+        msg.setWindowTitle(u"국토기본정보 공간정보 중첩 검사 툴")
         msg.setStandardButtons(QMessageBox.Ok)
 
         msg.exec_()
@@ -160,13 +170,11 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         self.connect(self.btnLoadImage, SIGNAL("clicked()"), self._on_click_btnLoadImage)
         self.connect(self.btnLoadTms, SIGNAL("clicked()"), self._on_click_btnLoadTms)
         self.connect(self.btnLoadBaseMap, SIGNAL("clicked()"), self._on_click_btnLoadBaseMap)
-        # self.connect(self.btnLoadOnmapBaseMap, SIGNAL("clicked()"), self._on_click_btnLoadOnmapBaseMap)
-        # self.connect(self.btnLoadInternetBaseMap, SIGNAL("clicked()"), self._on_click_btnLoadInternetBaseMap)
         self.connect(self.btnReportError, SIGNAL("clicked()"), self._on_click_btnReportError)
 
         root = QgsProject.instance().layerTreeRoot()
-        root.willRemoveChildren.connect(self.onWillRemoveChildren)
-        root.removedChildren.connect(self.onRemovedChildren)  ## 이 이벤트는 제거된 후에 남은 것을 찾을 수 있음
+        root.willRemoveChildren.connect(self.onWillRemoveChildren)  # 이 이벤트는 제거되거나 이동되는 레이어를 찾을 수 있음
+        root.removedChildren.connect(self.onRemovedChildren)  # 이 이벤트는 제거된 후에 남은 레이어를 찾을 수 있음
 
     def onWillRemoveChildren(self, node, indexFrom, indexTo):
         self.debug("[Will] indexFrom: {}, indexTo:{}".format(indexFrom, indexTo))

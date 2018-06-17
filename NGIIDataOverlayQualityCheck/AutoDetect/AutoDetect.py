@@ -8,14 +8,14 @@ import threading
 import platform
 import subprocess
 import time
-import glob
 import io
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-from PyQt4 import uic
+from PyQt4 import QtGui, uic
 
 from qgis.core import *
+from osgeo import gdal, ogr, osr
 
 # class SelectInspectData(QDialog, Ui_SelectInspectData):
 DbInfoDialog_FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'DbInfo.ui'))
@@ -93,6 +93,9 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
 
     conn = None
     sqlStatement = None
+
+    _last_opened_org_folder = None
+    _last_opened_edit_folder = None
 
     def __init__(self, iface, parent=None):
         super(AutoDetect, self).__init__(parent)
@@ -289,158 +292,286 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
 
         return None
 
-    def findOriginData(self):
-        # if self.radioShp.isChecked():
-        #     dataPath = QFileDialog.getExistingDirectory(self.iface.mainWindow(), u'검사 대상 폴더 선택',
-        #                                                 self.__oldDataDir)
-        #     self.__oldDataDir = os.path.dirname(dataPath)
-        #
-        #     self.logger.info("Set inspect data : " + dataPath)
-        #     self.txtInspectData.setText(dataPath)
-        # else:
-        #     fileFilter = "GeoPackage (*.gpkg)"
-        #
-        #     dataPath = QFileDialog.getOpenFileName(self.iface.mainWindow(), u'검사 대상 GeoPackage 선택',
-        #                                            self.__oldDataDir, filter=fileFilter)
-        #     self.__oldDataDir = os.path.dirname(dataPath)
-        #
-        #     self.logger.info("Set inspect data : " + dataPath)
-        #     self.txtInspectData.setText(dataPath)
-
-        dataPath = QFileDialog.getExistingDirectory(self.iface.mainWindow(), u'검사 대상 폴더 선택')
-        self.txtOriginData.setText(dataPath)
+    def getGpkgLayerList(self, gpkgPath, listUi):
+        gpkg = None
 
         try:
-            # 한글검사
-            str(dataPath)
+            # TODO: 속도 향상에 아래 문장이 매우 중요. 다른 곳에도 적용하자!!
+            gdal.SetConfigOption('OGR_SQLITE_SYNCHRONOUS', 'OFF')
+            gpkg = ogr.Open(gpkgPath)
+            if not gpkg:
+                raise Exception()
 
-        except:
-            QMessageBox.warning(self.parent, u'검사 대상 경로 오류',
-                                u'검사 대상의 경로에 한글이 포함되어 있습니다.\n'
-                                u'검사 대상의 위치를 이동해주시기 바랍니다.\n\n'
-                                u'선택한 경로 : ' + dataPath)
-            self.txtOriginData.setText('')
+            # Load Layer
+            for layer in gpkg:
+                layerName = unicode(layer.GetName().decode('utf-8'))
+                item = QListWidgetItem(layerName)
+                listUi.addItem(item)
+
+        except Exception as e:
+            raise e
+        finally:
+            QgsApplication.restoreOverrideCursor()
+            self.progressMain.setValue(0)
+            self.progressSub.setValue(0)
+            del gpkg
+
+    def findOriginData(self):
+        dialog = QtGui.QFileDialog(self)
+        dialog.setFileMode(QtGui.QFileDialog.ExistingFiles)
+
+        if self._last_opened_org_folder is not None:
+            dialog.setDirectory(self._last_opened_org_folder)
+
+        filters = [u"국토지리정보 파일(*.gpkg *.shp)"]
+        dialog.setNameFilters(filters)
+
+        if (dialog.exec_()):
+            fileList = dialog.selectedFiles()
+        else:
+            return
+
+        shpList = list()
+        gpkgList = list()
+
+        for vectorPath in fileList:
+            filename, extension = os.path.splitext(vectorPath)
+
+            if extension.lower() == ".shp":
+                shpList.append(vectorPath)
+            elif extension.lower() == ".gpkg":
+                gpkgList.append(vectorPath)
+
+        if len(shpList) != 0 and len(gpkgList) != 0:
+            self.parent.alert(u"GeoPackage 파일과 Shape 파일을 동시에 선택하실 수 없습니다.")
+            return
+
+        if len(shpList) == 0 and len(gpkgList) > 1:
+            self.parent.alert(u"GeoPackage 파일은 여러개를 동시선택 하실 수 없습니다.")
+            return
+
+        self.lstOriginData.clear()
+        if len(shpList):
+            for shpPath in shpList:
+                folder, fileName = os.path.split(shpPath)
+                basename, ext = os.path.splitext(fileName)
+
+                self._last_opened_org_folder = folder
+                item = QListWidgetItem(basename)
+                self.lstOriginData.addItem(item)
+
+            self.lblOrgFolder.setText(self._last_opened_org_folder)
+
+            return
+
+        gpkgPath = gpkgList[0]
+        self.getGpkgLayerList(gpkgPath, self.lstOriginData)
+        self._last_opened_org_folder = gpkgPath
+        self.lblOrgFolder.setText(self._last_opened_org_folder)
+
 
     def findEditData(self):
-        # if self.radioShp.isChecked():
-        #     dataPath = QFileDialog.getExistingDirectory(self.iface.mainWindow(), u'검사 대상 폴더 선택',
-        #                                                 self.__oldDataDir)
-        #     self.__oldDataDir = os.path.dirname(dataPath)
-        #
-        #     self.logger.info("Set inspect data : " + dataPath)
-        #     self.txtInspectData.setText(dataPath)
-        # else:
-        #     fileFilter = "GeoPackage (*.gpkg)"
-        #
-        #     dataPath = QFileDialog.getOpenFileName(self.iface.mainWindow(), u'검사 대상 GeoPackage 선택',
-        #                                            self.__oldDataDir, filter=fileFilter)
-        #     self.__oldDataDir = os.path.dirname(dataPath)
-        #
-        #     self.logger.info("Set inspect data : " + dataPath)
-        #     self.txtInspectData.setText(dataPath)
+        dialog = QtGui.QFileDialog(self)
+        dialog.setFileMode(QtGui.QFileDialog.ExistingFiles)
 
-        dataPath = QFileDialog.getExistingDirectory(self.iface.mainWindow(), u'검사 대상 폴더 선택')
-        self.txtEditData.setText(dataPath)
+        if self._last_opened_edit_folder is not None:
+            dialog.setDirectory(self._last_opened_edit_folder)
 
-        try:
-            # 한글검사
-            str(dataPath)
+        filters = [u"국토지리정보 파일(*.gpkg *.shp)"]
+        dialog.setNameFilters(filters)
 
-        except:
-            QMessageBox.warning(self.parent, u'검사 대상 경로 오류',
-                                u'검사 대상의 경로에 한글이 포함되어 있습니다.\n'
-                                u'검사 대상의 위치를 이동해주시기 바랍니다.\n\n'
-                                u'선택한 경로 : ' + dataPath)
-            self.txtEditData.setText('')
+        if (dialog.exec_()):
+            fileList = dialog.selectedFiles()
+        else:
+            return
+
+        shpList = list()
+        gpkgList = list()
+
+        for vectorPath in fileList:
+            filename, extension = os.path.splitext(vectorPath)
+
+            if extension.lower() == ".shp":
+                shpList.append(vectorPath)
+            elif extension.lower() == ".gpkg":
+                gpkgList.append(vectorPath)
+
+        if len(shpList) != 0 and len(gpkgList) != 0:
+            self.parent.alert(u"GeoPackage 파일과 Shape 파일을 동시에 선택하실 수 없습니다.")
+            return
+
+        if len(shpList) == 0 and len(gpkgList) > 1:
+            self.parent.alert(u"GeoPackage 파일은 여러개를 동시선택 하실 수 없습니다.")
+            return
+
+        self.lstEditData.clear()
+        if len(shpList):
+            for shpPath in shpList:
+                folder, fileName = os.path.split(shpPath)
+                basename, ext = os.path.splitext(fileName)
+
+                self._last_opened_edit_folder = folder
+                item = QListWidgetItem(basename)
+                self.lstEditData.addItem(item)
+
+            self.lblEditFolder.setText(self._last_opened_edit_folder)
+            return
+
+        gpkgPath = gpkgList[0]
+        self.getGpkgLayerList(gpkgPath, self.lstEditData)
+        self._last_opened_edit_folder = gpkgPath
+        self.lblEditFolder.setText(self._last_opened_edit_folder)
 
     def findDiff(self):
+        if self.lstOriginData.count() == 0:
+            self.parent.alert(u"기초자료 레이어를 하나이상 선택하셔야만 시작 가능합니다.")
+            return
+
+        if self.lstEditData.count() == 0:
+            self.parent.alert(u"수정성과 레이어를 하나이상 선택하셔야만 시작 가능합니다.")
+            return
+
+
+        flagNotSame = False
+
+        if self.lstEditData.count() != self.lstOriginData.count():
+            flagNotSame = True
+        else:
+            for i in range(self.lstOriginData.count()):
+                iOrgLayer = self.lstOriginData.item(i).text()
+                iEditLayer = self.lstEditData.item(i).text()
+                
+                if iOrgLayer != iEditLayer:
+                    flagNotSame = True
+                    break
+                    
+        if flagNotSame:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Question)
+            msg.setWindowTitle(u"국토기본정보 공간정보 중첩 검사 툴")
+            msg.setText(u"기초자료와 수정성과의 레이어 쌍이 맞지 않습니다.\n"
+                        u"기초자료에만 있는 레이어의 객체는 모두 삭제된 것으로, \n"
+                        u"수정성과에만 있는 레이어의 객체는 모두 생성된 것으로 처리됩니다.\n"
+                        u"\n"
+                        u"그래도 계속 진행하시겠습니까?")
+            msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+
+            rc = msg.exec_()
+            if rc != QMessageBox.Yes:
+                return
+
+        if self._last_opened_org_folder == self._last_opened_edit_folder:
+            self.parent.alert(u"기초자료와 수정성과가 같은 폴더의 같은 파일들이면 안됩니다.")
+            return
+
+        # 자동비교 대화상자 닫기
         self.close()
 
         self.progressMain.setMinimum(0)
         self.progressMain.setMaximum(0)
 
         self.lblStatus.setText(u"자료 확인 중 ... ")
+        QgsApplication.setOverrideCursor(Qt.WaitCursor)
 
-        if self.ORIGIN_SCHEMA in self.selectSchemaList():
-            self.dropSchema(self.ORIGIN_SCHEMA)
+        try:
+            if self.ORIGIN_SCHEMA in self.selectSchemaList():
+                self.dropSchema(self.ORIGIN_SCHEMA)
 
-        if self.EDIT_SCHEMA in self.selectSchemaList():
-            self.dropSchema(self.EDIT_SCHEMA)
+            if self.EDIT_SCHEMA in self.selectSchemaList():
+                self.dropSchema(self.EDIT_SCHEMA)
 
-        # 기성과 insert
-        res = self.insertData(self.ORIGIN_SCHEMA, 'shp', self.txtOriginData.text())
-        if not res:
-            self.parent.error(u"오류가 발생하여 변화내용 자동탐지 탐지가 중단되었습니다.")
-            return
+            # 기성과 insert
+            if self.lblOrgFolder.text()[:5].lower() == ".gpkg":
+                dataType = "gpkg"
+            else:
+                dataType = "shp"
 
-        # 남품성과 insert
-        res = self.insertData(self.EDIT_SCHEMA, 'shp', self.txtEditData.text())
-        if not res:
-            self.parent.error(u"오류가 발생하여 변화내용 자동탐지 탐지가 중단되었습니다.")
-            return
+            res = self.insertData(self.ORIGIN_SCHEMA, dataType, self.lblOrgFolder.text(), [self.lstOriginData.item(i).text() for i in range(self.lstOriginData.count())])
+            if not res:
+                self.parent.error(u"오류가 발생하여 변화내용 자동탐지 탐지가 중단되었습니다.")
+                return
 
-        res = self.createInpsectObj(self.EDIT_SCHEMA)
-        if not res:
-            self.parent.error(u"오류가 발생하여 변화내용 자동탐지 탐지가 중단되었습니다.")
-            return
+            # 남품성과 insert
+            if self.lblEditFolder.text()[:5].lower() == ".gpkg":
+                dataType = "gpkg"
+            else:
+                dataType = "shp"
 
-        originTableList = self.selectTableList(self.ORIGIN_SCHEMA)
-        editTableList = self.selectTableList(self.EDIT_SCHEMA)
+            res = self.insertData(self.EDIT_SCHEMA, dataType, self.lblEditFolder.text(), [self.lstEditData.item(i).text() for i in range(self.lstEditData.count())])
+            if not res:
+                self.parent.error(u"오류가 발생하여 변화내용 자동탐지 탐지가 중단되었습니다.")
+                return
 
-        editTableList.remove("inspect_obj")
+            res = self.createInpsectObj(self.EDIT_SCHEMA)
+            if not res:
+                self.parent.error(u"오류가 발생하여 변화내용 자동탐지 탐지가 중단되었습니다.")
+                return
 
-        for editTable in editTableList:
-            # 비교할 테이블이 없으면 넘어감
-            if editTable not in originTableList:
-                self.parent.error(u'{table}가 매칭되는 기준 데이터가 없습니다.'.format(table=editTable))
-                continue
+            originTableList = self.selectTableList(self.ORIGIN_SCHEMA)
+            editTableList = self.selectTableList(self.EDIT_SCHEMA)
 
-            originGeomType = self.selectGeometryType(self.ORIGIN_SCHEMA, editTable)
-            editGeomType = self.selectGeometryType(self.EDIT_SCHEMA, editTable)
+            editTableList.remove("inspect_obj")
 
-            if originGeomType == '' or editGeomType == '' or originGeomType != editGeomType:
-                self.parent.error(u'{table}의 도형타입이 기준 데이터와 일치하지 않습니다.'.format(table=editTable))
-                continue
+            for editTable in editTableList:
+                # 비교할 테이블이 없으면 넘어감
+                if editTable not in originTableList:
+                    self.parent.error(u'{table}가 매칭되는 기준 데이터가 없습니다.'.format(table=editTable))
+                    continue
 
-            self.selectColList(self.EDIT_SCHEMA, editTable)
+                originGeomType = self.selectGeometryType(self.ORIGIN_SCHEMA, editTable)
+                editGeomType = self.selectGeometryType(self.EDIT_SCHEMA, editTable)
 
-            if editGeomType == 'MULTIPOLYGON':  # 폴리곤 일때는 GeoHash 와 면적 생성
-                self.geohash_sql = u'st_geohash(ST_Transform(st_centroid(st_envelope(wkb_geometry)), 4326), ' \
-                                   u'12) as mbr_hash_12, round( CAST(st_area(wkb_geometry) as numeric), 1) as geom_area'
-            elif editGeomType == 'MULTILINESTRING':  # 선 일때는 GeoHash 와 길이 생성
-                self.geohash_sql = u'st_geohash(ST_Transform(st_centroid(st_envelope(wkb_geometry)), 4326), 12) ' \
-                                   u'as mbr_hash_12, round( CAST(st_length(wkb_geometry) as numeric), 1) as geom_length'
-            else:  # 점 일때는 GeoHash 만 생성
-                self.geohash_sql = u'st_geohash(ST_Transform(wkb_geometry, 4326), 12) as mbr_hash_12'
+                if originGeomType == '' or editGeomType == '' or originGeomType != editGeomType:
+                    self.parent.error(u'{table}의 도형타입이 기준 데이터와 일치하지 않습니다.'.format(table=editTable))
+                    continue
 
-            self.lblStatus.setText(u"{} : 동일 객체 탐지".format(editTable))
-            self.findSame(editTable, editGeomType)
-            self.lblStatus.setText(u"{} : 형상 수정 탐지".format(editTable))
-            self.findEditOnlyGeomety(editTable)
-            self.lblStatus.setText(u"{} : 속성 수정 탐지".format(editTable))
-            self.findEditAttr(editTable, editGeomType)
-            self.lblStatus.setText(u"{} : 삭제 객체 탐지".format(editTable))
-            self.findDel(editTable)
-            self.lblStatus.setText(u"{} : 추가 객체 탐지".format(editTable))
-            self.findAdd(editTable)
+                self.selectColList(self.EDIT_SCHEMA, editTable)
 
-        self.lblStatus.setText(u"결과 불러오는 중 ... ")
-        self.addLayers()
+                if editGeomType == 'POLYGON' or editGeomType == 'MULTIPOLYGON':  # 폴리곤 일때는 GeoHash 와 면적 생성
+                    self.geohash_sql = u'st_geohash(ST_Transform(st_centroid(st_envelope(wkb_geometry)), 4326), ' \
+                                       u'12) as mbr_hash_12, round( CAST(st_area(wkb_geometry) as numeric), 1) as geom_area'
+                elif editGeomType == 'LINESTRING' or editGeomType == 'MULTILINESTRING':  # 선 일때는 GeoHash 와 길이 생성
+                    self.geohash_sql = u'st_geohash(ST_Transform(st_centroid(st_envelope(wkb_geometry)), 4326), 12) ' \
+                                       u'as mbr_hash_12, round( CAST(st_length(wkb_geometry) as numeric), 1) as geom_length'
+                else:  # 점 일때는 GeoHash 만 생성
+                    self.geohash_sql = u'st_geohash(ST_Transform(wkb_geometry, 4326), 12) as mbr_hash_12'
 
-        self.progressMain.setMaximum(10)
-        self.lblStatus.setText(u"변화내용 자동탐지 완료 ")
-        self.parent.info(u"변화내용 자동탐지 완료 ")
+                self.lblStatus.setText(u"{} : 동일 객체 탐지".format(editTable))
+                self.findSame(editTable, editGeomType)
+                self.lblStatus.setText(u"{} : 형상 수정 탐지".format(editTable))
+                self.findEditOnlyGeomety(editTable)
+                self.lblStatus.setText(u"{} : 속성 수정 탐지".format(editTable))
+                self.findEditAttr(editTable, editGeomType)
+                self.lblStatus.setText(u"{} : 삭제 객체 탐지".format(editTable))
+                self.findDel(editTable)
+                self.lblStatus.setText(u"{} : 추가 객체 탐지".format(editTable))
+                self.findAdd(editTable)
 
-    def insertData(self, schema, dataType, data):
+            self.lblStatus.setText(u"결과 불러오는 중 ... ")
+            self.addLayers()
+
+            self.progressMain.setMaximum(10)
+            self.lblStatus.setText(u"변화내용 자동탐지 완료 ")
+            self.parent.info(u"변화내용 자동탐지 완료 ")
+
+        except Exception as e:
+            self.lblStatus.setText(u"변화내용 자동탐지 오류로 중단")
+            self.parent.error(u"변화내용 자동탐지 오류로 중단")
+            raise e
+        finally:
+            QgsApplication.restoreOverrideCursor()
+            self.progressMain.setMaximum(10)
+            self.progressMain.setValue(0)
+
+
+    def insertData(self, schema, dataType, folder, layerList):
         if dataType == 'shp':
-            return self.__insertShp(schema, data)
+            return self.__insertShp(schema, folder, layerList)
 
         else:
-            return self.__insertGpkg(schema, data)
+            return self.__insertGpkg(schema, folder, layerList)
 
-    def __insertShp(self, schema, inspectData):
-        self.parent.info(u"{} 폴더를 읽고 있습니다.".format(inspectData))
-
+    def __insertShp(self, schema, folder, layerList):
         createResult = self.createSchema(schema)
         if not createResult:
             return False
@@ -449,25 +580,62 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
             .format(host=self.__dbHost, port=self.__dbPort, dbname=self.__dbNm,
                     user=self.__dbUser, password=self.__dbPassword)
 
-        for shp in glob.glob(os.path.join(inspectData, "*.shp")):
-            self.parent.debug(u"{} 넣는중".format(shp))
-            commandList = ['ogr2ogr', '-a_srs', 'EPSG:5179', '--config', 'SHAPE_ENCODING', 'CP949',
-                           '--config', 'GDAL_FILENAME_IS_UTF8', 'NO', '-f', 'PostgreSQL',
-                           pgConnectInfo, shp, '-nlt', 'PROMOTE_TO_MULTI', '-lco', 'PRECISION=NO',
-                           '-lco', 'SCHEMA={schema}'.format(schema=schema)]
+        # 좌표계 정보 생성
+        crs = osr.SpatialReference()
+        crs.ImportFromEPSG(5179)
 
-            try:
-                self.parent.debug("Command : " + ' '.join(commandList))
-                threadExecuteCmd(commandList)
+        # 대상 파일 만들기
+        # pgDriver = ogr.GetDriverByName("PostgreSQL")
+        # pg = pgDriver.CreateDataSource(pgConnectInfo)
+        pg = gdal.OpenEx(pgConnectInfo, gdal.OF_VECTOR, ["PostgreSQL"], ["SCHEMA={}".format(schema), 'PRECISION=NO'])
 
-                self.parent.debug("Insert completely.")
+        for layerName in layerList:
+            if platform.system() == 'Windows':
+                shpLayer = os.path.join(folder.replace("/", "\\"), layerName) + '.shp'
+            else:
+                shpLayer = os.path.join(folder, layerName) + '.shp'
 
-            except Exception as e:
-                self.parent.error(u"SHP을 읽는 도중 문제가 발생하였습니다.")
-                return False
+            # TODO: 인코딩 자동설정
+            shp = gdal.OpenEx(shpLayer, gdal.OF_VECTOR, ["ESRI Shapefile"], ["SHAPE_ENCODING=UTF8", "ENCODING=UTF8", 'PRECISION=NO'])
+            shpLayer = shp.GetLayer()
+
+            # 원본 레이어 정보 얻기
+            geomType = shpLayer.GetGeomType()
+            layerDefinition = shpLayer.GetLayerDefn()
+
+            # 원본 레이어와 동일하게 대상 레이어 만들기
+            pgLayer = pg.CreateLayer("{}.{}".format(schema, layerName).encode('UTF8'), crs, geom_type=geomType)
+            for i in range(layerDefinition.GetFieldCount()):
+                fieldDefn = layerDefinition.GetFieldDefn(i)
+                # 이 조건절이 없으면 변환시 precision 문제로 인한 overflow 오류가 난다.
+                if fieldDefn.GetType() == ogr.OFTReal:
+                    fieldDefn.SetWidth(0)
+                    fieldDefn.SetPrecision(0)
+                pgLayer.CreateField(fieldDefn)
+
+            pgLayerDefn = pgLayer.GetLayerDefn()
+            shpCnt = len(shpLayer)
+            layerIdx = 0
+            self.parent.prgSub.setMinimum(0)
+            self.parent.prgSub.setMaximum(shpCnt)
+            # 원본 레이어의 객체 돌며
+            for shpFeature in shpLayer:
+                # 동일한 대상 객체 생성
+                pgFeature = ogr.Feature(pgLayerDefn)
+                for i in range(pgLayerDefn.GetFieldCount()):
+                    pgFeature.SetField(pgLayerDefn.GetFieldDefn(i).GetNameRef(), shpFeature.GetField(i))
+                geom = shpFeature.GetGeometryRef()
+                pgFeature.SetGeometry(geom)
+                pgLayer.CreateFeature(pgFeature)
+                layerIdx = layerIdx + 1
+                self.parent.prgSub.setValue(layerIdx)
+
+            sql = u"CREATE INDEX ON {}.{} USING GIST (wkb_geometry)".format(schema, layerName)
+            pg.ExecuteSQL(sql.encode("UTF8"))
 
         return True
 
+    # TODO: ogr 이용해 한글 문제 없게 수정 필요
     def __insertGpkg(self, schema, inspectData):
         self.parent.info(u"{} 파일을 읽고 있습니다.".format(inspectData))
 
@@ -479,7 +647,7 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
             .format(host=self.__dbHost, port=self.__dbPort, dbname=self.__dbNm,
                     user=self.__dbUser, password=self.__dbPassword)
 
-        commandList = ['ogr2ogr', '-a_srs', 'EPSG:5179', '--config', 'SHAPE_ENCODING', 'UTF-8', '-f', 'PostgreSQL',
+        commandList = ['ogr2ogr', '-a_srs', 'EPSG:5179', '-f', 'PostgreSQL',
                        pgConnectInfo, inspectData, '-nlt', 'PROMOTE_TO_MULTI',
                        '-lco', 'SCHEMA={schema}'.format(schema=schema)]
 
@@ -697,9 +865,9 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
         self.parent.info(u"{}의 동일 객체를 탐지하고 있습니다.".format(table))
         cur = self.conn.cursor()
 
-        if geom_type == 'MULTIPOLYGON':  # 폴리곤 일때는 면적 비교 추가
+        if geom_type == 'POLYGON' or geom_type == 'MULTIPOLYGON':  # 폴리곤 일때는 면적 비교 추가
             add_sql = u'and e.geom_area between o.geom_area*0.95 and o.geom_area*1.05'
-        elif geom_type == 'MULTILINESTRING':  # 선 일때는 길이 비교 추가
+        elif geom_type == 'LINESTRING' or geom_type == 'MULTILINESTRING':  # 선 일때는 길이 비교 추가
             add_sql = u'and e.geom_length between o.geom_length*0.95 and o.geom_length*1.05'
         else:  # 점 일때는 PK 비교 추가
             add_sql = u'and o.{0} = e.{0}'.format(self.id_column)
@@ -855,7 +1023,7 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
 
         try:
 
-            if geom_type == 'MULTIPOLYGON':
+            if geom_type == 'POLYGON' or geom_type == 'MULTIPOLYGON':
                 insertSql = """
                         WITH same AS (
                             SELECT {column_sql}, {geohash_sql} 
@@ -914,7 +1082,7 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
                         WHERE receive.mbr_hash_12=origin.mbr_hash_12 
                         AND receive.geom_area BETWEEN origin.geom_area*0.95 AND origin.geom_area*1.05
                     """
-            elif geom_type == 'MULTILINESTRING':
+            elif geom_type == 'LINESTRING' or geom_type == 'MULTILINESTRING':
                 insertSql = """
                         WITH same AS (
                             SELECT {column_sql}, {geohash_sql} 
@@ -1143,11 +1311,11 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
             self.maintain_data = QgsVectorLayer(uri.uri(), u'변화없음_' + table, "postgres")
 
             symbol = None
-            if self.maintain_data.wkbType() == QGis.WKBMultiPolygon:
+            if self.maintain_data.wkbType() == QGis.WKBPolygon or self.maintain_data.wkbType() == QGis.WKBMultiPolygon:
                 symbol = QgsFillSymbolV2().createSimple({'color_border': '#a7a7a7', 'width_border': '0.5',
                                                          'style': 'no', 'style_border': 'solid',
                                                          "outline_width_unit": "pixel"})
-            elif self.maintain_data.wkbType() == QGis.WKBMultiLineString:
+            elif self.maintain_data.wkbType() == QGis.WKBLineString or self.maintain_data.wkbType() == QGis.WKBMultiLineString:
                 symbol = QgsLineSymbolV2().createSimple({'color': '#a7a7a7', 'width': '0.5',
                                                          'style': 'solid',
                                                          "outline_width_unit": "pixel"})
@@ -1188,11 +1356,11 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
             diff_data_type = self.diff_data.wkbType()
             categories = []
             for mod_type, (color, label) in mod_type_symbol.items():
-                if diff_data_type == QGis.WKBMultiPolygon:
+                if diff_data_type == QGis.WKBPolygon or diff_data_type == QGis.WKBMultiPolygon:
                     symbol = QgsFillSymbolV2().createSimple({'color_border': color, 'width_border': '1.5',
                                                              'style': 'no', 'style_border': 'solid',
                                                              "outline_width_unit": "pixel"})
-                elif diff_data_type == QGis.WKBMultiLineString:
+                elif diff_data_type == QGis.WKBLineString or diff_data_type == QGis.WKBMultiLineString:
                     symbol = QgsLineSymbolV2().createSimple({'color': color, 'width': '1.5',
                                                              'style': 'solid',
                                                              "outline_width_unit": "pixel"})

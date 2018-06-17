@@ -11,12 +11,15 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>공간정보 중첩검사 툴</string>
+   <string>공간정보 중첩 검사 툴</string>
   </property>
   <widget class="QWidget" name="dockWidgetContents">
    <layout class="QGridLayout" name="gridLayout">
     <item row="3" column="0">
      <widget class="QPushButton" name="btnLoadTms">
+      <property name="toolTip">
+       <string>국가인터넷지도, 다음지도, 네이버지도, OSM 불러오기</string>
+      </property>
       <property name="text">
        <string>인터넷지도 중첩</string>
       </property>
@@ -24,6 +27,9 @@
     </item>
     <item row="2" column="0">
      <widget class="QPushButton" name="btnLoadImage">
+      <property name="toolTip">
+       <string>IMG, Tif 등 영상자료 불러오기</string>
+      </property>
       <property name="text">
        <string>국토지리정보원 영상 중첩</string>
       </property>
@@ -31,6 +37,9 @@
     </item>
     <item row="0" column="0">
      <widget class="QPushButton" name="btnAutoDetect">
+      <property name="toolTip">
+       <string>수주시 받은 기초자료와 납품할 수정성과물 자동비교</string>
+      </property>
       <property name="text">
        <string>기초자료/수정성과 비교</string>
       </property>
@@ -82,6 +91,9 @@
     </item>
     <item row="1" column="0">
      <widget class="QPushButton" name="btnLoadVector">
+      <property name="toolTip">
+       <string>GeoPackage, Shape, Dxf, 온맵 등 지도 불러오기</string>
+      </property>
       <property name="text">
        <string>국토지리정보원 지도 중첩</string>
       </property>
@@ -114,6 +126,9 @@
     </item>
     <item row="4" column="0">
      <widget class="QPushButton" name="btnLoadBaseMap">
+      <property name="toolTip">
+       <string>국토기본정보 최신 자료 불러오기</string>
+      </property>
       <property name="text">
        <string>국토기본정보 중첩</string>
       </property>
@@ -180,6 +195,9 @@
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
        <widget class="QPushButton" name="btnReportError">
+        <property name="toolTip">
+         <string>발견된 오류사항을 캡처하고 내용 기록</string>
+        </property>
         <property name="text">
          <string>오류사항 기록</string>
         </property>
@@ -187,6 +205,9 @@
       </item>
       <item>
        <widget class="QPushButton" name="btnMakeReport">
+        <property name="toolTip">
+         <string>오류보고를 PDF 파일로 생성</string>
+        </property>
         <property name="text">
          <string>오류보고 생성</string>
         </property>

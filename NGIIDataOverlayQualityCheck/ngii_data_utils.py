@@ -3,12 +3,12 @@
 /***************************************************************************
  NgiiDataUtils
                                  A QGIS plugin
- 국토지리정보원 데이터 사용지원 툴
+ 국토지리정보원 공간정보 중첩 검사 툴
                               -------------------
         begin                : 2018-04-03
         git sha              : $Format:%H$
         copyright            : (C) 2018 by NGII
-        email                : jangbi882@gmail.com
+        email                : ngii.spt@gmail.com
  ***************************************************************************/
 
 /***************************************************************************
@@ -64,7 +64,7 @@ class NgiiDataUtils:
     def initGui(self):
         # 메뉴와 툴바에 추가할 항목 정의
         menuIcons = ['icon.png']
-        menuTexts = [u'국토지리정보원 데이터 중첩검사']
+        menuTexts = [u'국토지리정보원 공간정보 중첩 검사']
         menuActions = [self.togglePanel]
 
         assert (len(menuIcons) == len(menuTexts))

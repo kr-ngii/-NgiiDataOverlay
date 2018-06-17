@@ -160,7 +160,7 @@ class Ui_NgiiDataUtilsDockWidgetBase(object):
         QtCore.QMetaObject.connectSlotsByName(NgiiDataUtilsDockWidgetBase)
 
     def retranslateUi(self, NgiiDataUtilsDockWidgetBase):
-        NgiiDataUtilsDockWidgetBase.setWindowTitle(_translate("NgiiDataUtilsDockWidgetBase", "국토지리정보원 데이터 중첩검사", None))
+        NgiiDataUtilsDockWidgetBase.setWindowTitle(_translate("NgiiDataUtilsDockWidgetBase", "국토지리정보원 공간정보 중첩 검사", None))
         self.btnLoadInternetBaseMap.setText(_translate("NgiiDataUtilsDockWidgetBase", "인터넷지도해당 국토기본정보 불러오기", None))
         self.btnLoadImage.setText(_translate("NgiiDataUtilsDockWidgetBase", "영상(GeoTIFF/IMG) 불러오기", None))
         self.btnLoadOnmapBaseMap.setText(_translate("NgiiDataUtilsDockWidgetBase", "온맵해당 국토기본정보 불러오기", None))

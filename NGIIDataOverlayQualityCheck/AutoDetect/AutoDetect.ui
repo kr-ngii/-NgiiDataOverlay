@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>560</width>
-    <height>250</height>
+    <width>690</width>
+    <height>348</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -19,194 +19,193 @@
     <height>250</height>
    </size>
   </property>
-  <property name="maximumSize">
-   <size>
-    <width>16777215</width>
-    <height>251</height>
-   </size>
-  </property>
   <property name="windowTitle">
-   <string>변화내용 자동탐지</string>
+   <string>기초자료/수정성과 자동비교</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
-    <widget class="QLabel" name="label_3">
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>29</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>25</height>
-      </size>
-     </property>
-     <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#838383;&quot;&gt;[변화내용 자동탐지] 기성과와 납품성과를 비교하여 자동으로 변화된 정보를 분석하여 시각화 해줍니다.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="0">
-    <widget class="QPushButton" name="btnFindDiff">
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>35</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>35</height>
-      </size>
-     </property>
-     <property name="text">
-      <string>자동 변화 탐지</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="0">
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeType">
-      <enum>QSizePolicy::Fixed</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>5</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="2" column="0">
-    <layout class="QVBoxLayout" name="verticalLayout_2">
+    <layout class="QVBoxLayout" name="verticalLayout_3">
      <item>
-      <widget class="QLabel" name="label_2">
+      <widget class="QLabel" name="label_3">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>40</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>40</height>
+        </size>
+       </property>
        <property name="text">
-        <string>납품성과 자료</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#838383;&quot;&gt;발주시 받은 기초자료와 납품할 수정성과를 자동으로 비교하여&lt;br/&gt;수정성과에 변동코드를 부여하고 색으로 구분해 줍니다.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
       </widget>
      </item>
      <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
        <item>
-        <widget class="QLineEdit" name="txtEditData">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>25</height>
-          </size>
-         </property>
-        </widget>
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout">
+           <item>
+            <widget class="QLabel" name="label">
+             <property name="text">
+              <string>기초자료 레이어 리스트</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::Fixed</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>13</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnFindOriginData">
+             <property name="minimumSize">
+              <size>
+               <width>80</width>
+               <height>30</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>120</width>
+               <height>30</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>파일선택...</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QLabel" name="lblOrgFolder">
+           <property name="text">
+            <string>Folder:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QListWidget" name="lstOriginData"/>
+         </item>
+        </layout>
        </item>
        <item>
-        <spacer name="horizontalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Fixed</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>10</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
-        <widget class="QPushButton" name="btnFindEditData">
-         <property name="minimumSize">
-          <size>
-           <width>25</width>
-           <height>25</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>25</width>
-           <height>25</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>...</string>
-         </property>
-        </widget>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <item>
+            <widget class="QLabel" name="label_2">
+             <property name="text">
+              <string>수정성과 레이어 리스트</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_2">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::Fixed</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>13</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnFindEditData">
+             <property name="minimumSize">
+              <size>
+               <width>80</width>
+               <height>30</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>120</width>
+               <height>30</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>파일선택...</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QLabel" name="lblEditFolder">
+           <property name="text">
+            <string>Folder:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QListWidget" name="lstEditData"/>
+         </item>
+        </layout>
        </item>
       </layout>
      </item>
-    </layout>
-   </item>
-   <item row="1" column="0">
-    <layout class="QVBoxLayout" name="verticalLayout">
      <item>
-      <widget class="QLabel" name="label">
+      <spacer name="verticalSpacer">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Fixed</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>5</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnFindDiff">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>35</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>35</height>
+        </size>
+       </property>
        <property name="text">
-        <string>기성과 자료</string>
+        <string>자동비교 시작</string>
        </property>
       </widget>
-     </item>
-     <item>
-      <layout class="QHBoxLayout" name="horizontalLayout">
-       <item>
-        <widget class="QLineEdit" name="txtOriginData">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>25</height>
-          </size>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="horizontalSpacer">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Fixed</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>10</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
-        <widget class="QPushButton" name="btnFindOriginData">
-         <property name="minimumSize">
-          <size>
-           <width>25</width>
-           <height>25</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>25</width>
-           <height>25</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>...</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
      </item>
     </layout>
    </item>
   </layout>
-  <zorder>btnFindDiff</zorder>
-  <zorder>label_3</zorder>
-  <zorder>verticalSpacer</zorder>
  </widget>
  <resources/>
  <connections/>
