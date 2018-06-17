@@ -228,3 +228,7 @@ class OpenlayersPlugin:
                 mapCanvas.setExtent(extMap)
             except:
                 pass
+
+    def addNgiiMap(self):
+        self.addLayer(OlDaumStreetLayer())
+        # self.addLayer(OlNgiiStreetLayer())

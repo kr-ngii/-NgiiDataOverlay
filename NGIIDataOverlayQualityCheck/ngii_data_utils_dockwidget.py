@@ -339,7 +339,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         layersText = u"&layers=".join(layerList)
         stylesText = u"&styles=" * len(layerList)
         # urlWithParams = u'crs=EPSG:4326&dpiMode=7&format=image/png&layers=tn_buld&styles=&layers=tn_river_bndry&styles=&url=http://seoul.gaia3d.com:8989/geoserver/ngii/wms?'.format(",".join(layerList))
-        urlWithParams = u'crs=EPSG:4326&dpiMode=7&format=image/png&layers={}{}&url=http://seoul.gaia3d.com:8989/geoserver/ngii/wms?'.format(layersText, stylesText)
+        urlWithParams = u'crs=EPSG:51796&dpiMode=7&format=image/png&layers={}{}&url=http://seoul.gaia3d.com:8989/geoserver/ngii/wms?'.format(layersText, stylesText)
         self.debug(urlWithParams)
         rlayer = QgsRasterLayer(urlWithParams, title, 'wms')
         rlayer.isValid()

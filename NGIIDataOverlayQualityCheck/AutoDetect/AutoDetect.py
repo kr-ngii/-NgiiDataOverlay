@@ -446,6 +446,10 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
                     break
                     
         if flagNotSame:
+            self.parent.alert(u"기초자료와 수정성과의 레이어 쌍이 맞지 않아 중단됩니다.")
+            return
+
+            # TODO: 아래처럼 되게 하기
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Question)
             msg.setWindowTitle(u"국토기본정보 공간정보 중첩 검사 툴")
@@ -488,7 +492,7 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
 
             res = self.insertData(self.ORIGIN_SCHEMA, dataType, self.lblOrgFolder.text(), [self.lstOriginData.item(i).text() for i in range(self.lstOriginData.count())])
             if not res:
-                self.parent.error(u"오류가 발생하여 변화내용 자동탐지 탐지가 중단되었습니다.")
+                self.parent.error(u"오류가 발생하여 기초자료/수정성과 비교가 중단되었습니다.")
                 return
 
             # 남품성과 insert
@@ -499,12 +503,12 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
 
             res = self.insertData(self.EDIT_SCHEMA, dataType, self.lblEditFolder.text(), [self.lstEditData.item(i).text() for i in range(self.lstEditData.count())])
             if not res:
-                self.parent.error(u"오류가 발생하여 변화내용 자동탐지 탐지가 중단되었습니다.")
+                self.parent.error(u"오류가 발생하여 기초자료/수정성과 비교가 중단되었습니다.")
                 return
 
             res = self.createInpsectObj(self.EDIT_SCHEMA)
             if not res:
-                self.parent.error(u"오류가 발생하여 변화내용 자동탐지 탐지가 중단되었습니다.")
+                self.parent.error(u"오류가 발생하여 기초자료/수정성과 비교가 중단되었습니다.")
                 return
 
             originTableList = self.selectTableList(self.ORIGIN_SCHEMA)

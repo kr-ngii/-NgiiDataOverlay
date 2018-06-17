@@ -67,8 +67,8 @@ class DxfLoader():
 
         dxfLayer = None
         try:
-            self.info(u"DXF에서 정보 추출 시작...")
-            self.progText(u"DXF에서 정보 추출 중")
+            self.progText(u"DXF에서 정보 추출 시작...")
+            self.info(u"DXF에서 정보 추출 중")
 
             dxfLayer = QgsVectorLayer(filePath, None, "ogr")
             crs = dxfLayer.crs()
@@ -82,13 +82,13 @@ class DxfLoader():
             totalFeature = dxfLayer.featureCount()
 
             crrFeatureIndex = 0
-            self.progressSub.setMinimum(0)
-            self.progressSub.setMaximum(totalFeature)
+            self.progressMain.setMinimum(0)
+            self.progressMain.setMaximum(totalFeature)
             for dxfFeature in dxfFeatures:
                 force_gui_update()
 
                 crrFeatureIndex += 1
-                self.progressSub.setValue(crrFeatureIndex)
+                self.progressMain.setValue(crrFeatureIndex)
 
                 layerName = dxfFeature["Layer"]
                 layerType = dxfFeature["SubClasses"]
@@ -127,8 +127,9 @@ class DxfLoader():
         except Exception as e:
             raise e
         finally:
-            self.progressSub.setValue(0)
-            self.progText(u"DXF에서 정보 추출 완료")
+            self.progressMain.setValue(0)
+            self.progText(u"")
+            self.info(u"DXF에서 정보 추출 완료")
             settings.setValue("/Projections/defaultBehaviour", oldProjValue)
             self.progressMain.setValue(0)
             self.progressSub.setValue(0)
