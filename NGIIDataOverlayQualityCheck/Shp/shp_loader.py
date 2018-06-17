@@ -41,6 +41,10 @@ class ShpLoader():
         settings.setValue("/Projections/defaultBehaviour", "useProject")
 
         try:
+            self.info(u"SHP 중첩 시작")
+            self.progText(u"SHP 중첩 중...")
+            self.progressMain.setMinimum(0)
+            self.progressMain.setMaximum(len(fileList))
 
             # 그룹명을 폴더명으로
             title = os.path.basename(os.path.split(fileList[0])[0])
@@ -54,12 +58,18 @@ class ShpLoader():
             layerTreeGroup = root.addGroup(title)
 
             # 하나씩 임포트
+            i = 0
             for filePath in fileList:
+                i += 1
+                self.progressMain.setValue(i)
+
                 force_gui_update()
                 self.importShp(filePath, layerTreeGroup)
 
 
             self.parent.appendGroupBox(layerTreeGroup, "shp")
+
+            self.info(u"SHP 중첩 완료")
 
         except Exception as e:
             raise e
@@ -67,8 +77,10 @@ class ShpLoader():
             settings.setValue("/Projections/defaultBehaviour", oldProjValue)
             QgsApplication.restoreOverrideCursor()
 
+            self.progText(u"")
             self.progressMain.setValue(0)
             self.progressSub.setValue(0)
+
 
     def importShp(self, filePath, layerTreeGroup):
         filename, extension = os.path.splitext(os.path.basename(filePath))

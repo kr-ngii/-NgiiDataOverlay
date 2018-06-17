@@ -81,7 +81,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
     iGroupBox = 0
     groupBoxList = None
 
-    displayDebug = True
+    displayDebug = False
     displayInfo = True
     displayComment = True
     displayError = True
@@ -566,6 +566,9 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         items = (self.gridLayout_2.itemAt(i) for i in range(self.gridLayout_2.count()))
         for item in items:
             widget = item.widget()
+            if not widget:
+                continue
+
             if isinstance(widget, QMyGroupBox):
                 if widget.groupId == groupId:
                     try:

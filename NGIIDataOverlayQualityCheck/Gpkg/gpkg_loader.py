@@ -31,35 +31,59 @@ class GpkgLoader():
 
 
     def runImport(self, filePath):
-        # 그룹부터 만들고
-        filename, _ = os.path.splitext(os.path.basename(filePath))
-        title = self.parent.getNewGroupTitle(u"[GPKG]" + filename)
+        QgsApplication.setOverrideCursor(Qt.WaitCursor)
 
-        root = QgsProject.instance().layerTreeRoot()
-        layerTreeGroup = root.addGroup(title)
-
-        # 하나씩 임포트
         try:
-            self.importGpkg(filePath, layerTreeGroup)
+            self.info(u"GPKG 중첩 시작")
+            self.progText(u"GPKG 중첩 중...")
+            self.progressMain.setMinimum(0)
+            self.progressMain.setMaximum(0)
 
+            # 그룹부터 만들고
+            filename, _ = os.path.splitext(os.path.basename(filePath))
+            title = self.parent.getNewGroupTitle(u"[GPKG]" + filename)
+
+            root = QgsProject.instance().layerTreeRoot()
+            layerTreeGroup = root.addGroup(title)
+
+            try:
+                self.importGpkg(filePath, layerTreeGroup)
+
+            except Exception as e:
+                raise e
+
+            self.parent.appendGroupBox(layerTreeGroup, "gpkg")
+            self.info(u"GPKG 중첩 완료")
         except Exception as e:
             raise e
+        finally:
+            QgsApplication.restoreOverrideCursor()
 
-        self.parent.appendGroupBox(layerTreeGroup, "gpkg")
+            self.progText(u"")
+            self.progressMain.setValue(0)
+            self.progressSub.setValue(0)
+
 
     def importGpkg(self, filePath, layerTreeGroup):
         QgsApplication.setOverrideCursor(Qt.WaitCursor)
         gpkg = None
 
         try:
-            # TODO: 속도 향상에 아래 문장이 매우 중요. 다른 곳에도 적용하자!!
+            # TODO: GPKG 속도 향상에 아래 문장이 매우 중요. 다른 곳에도 적용하자!!
             gdal.SetConfigOption('OGR_SQLITE_SYNCHRONOUS', 'OFF')
             gpkg = ogr.Open(filePath)
             if not gpkg:
                 raise Exception()
 
             # Load Layer
+            numLayer = gpkg.GetLayerCount()
+            self.progressMain.setMaximum(numLayer)
+
+            i = 0
             for layer in gpkg:
+                i += 1
+                self.progressMain.setValue(i)
+
                 force_gui_update()
                 layerName = unicode(layer.GetName().decode('utf-8'))
 
@@ -73,4 +97,5 @@ class GpkgLoader():
             QgsApplication.restoreOverrideCursor()
             self.progressMain.setValue(0)
             self.progressSub.setValue(0)
+            self.progressMain.setMaximum(100)
             del gpkg

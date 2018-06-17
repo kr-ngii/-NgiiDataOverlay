@@ -595,6 +595,9 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
             else:
                 shpLayer = os.path.join(folder, layerName) + '.shp'
 
+            # TODO: CopyLayer를 이용해 보자
+            # https://pcjericks.github.io/py-gdalogr-cookbook/vector_layers.html#load-data-to-memory
+
             # TODO: 인코딩 자동설정
             shp = gdal.OpenEx(shpLayer, gdal.OF_VECTOR, ["ESRI Shapefile"], ["SHAPE_ENCODING=UTF8", "ENCODING=UTF8", 'PRECISION=NO'])
             shpLayer = shp.GetLayer()
