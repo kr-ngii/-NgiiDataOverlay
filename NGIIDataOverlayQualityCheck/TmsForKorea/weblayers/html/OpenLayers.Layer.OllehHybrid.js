@@ -9,9 +9,11 @@
 
 OpenLayers.Layer.OllehHybrid = OpenLayers.Class(OpenLayers.Layer.XYZ, {
 
+    // http://tile.gis.kt.com/current/overlay.hybrid/11/3286/3037.png
     name: "OllehHybridMap",
     url: [
-        "http://map.ktgis.com/HybridMap/olleh5.08.1_0827_hyb/layers/_alllayers/l${z}/r${y}/c${x}.png"
+        // "http://map.ktgis.com/HybridMap/olleh5.08.1_0827_hyb/layers/_alllayers/l${z}/r${y}/c${x}.png"
+        "http://tile.gis.kt.com/current/overlay.hybrid/l${z}/r${y}/c${x}.png"
     ],
     
     resolutions: [2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5],

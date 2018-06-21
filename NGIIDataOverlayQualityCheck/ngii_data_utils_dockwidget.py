@@ -44,9 +44,13 @@ from Dxf import DxfLoader
 from Image import ImageLoader
 import socket
 
-from TmsForKorea.weblayers.daum_maps import OlDaumStreetLayer, OlDaumHybridLayer, OlDaumSatelliteLayer, OlDaumPhysicalLayer, OlDaumCadstralLayer
-from TmsForKorea.weblayers.naver_maps import OlNaverStreetLayer, OlNaverHybridLayer, OlNaverSatelliteLayer, OlNaverPhysicalLayer, OlNaverCadastralLayer
-from TmsForKorea.weblayers.ngii_maps import OlNgiiStreetLayer
+import TmsForKorea
+from TmsForKorea import *
+from TmsForKorea.weblayers.daum_maps import OlDaumStreetLayer, OlDaumHybridLayer
+from TmsForKorea.weblayers.naver_maps import OlNaverStreetLayer, OlNaverHybridLayer
+from TmsForKorea.weblayers.olleh_maps import OlOllehStreetLayer, OlOllehHybridLayer, OlOllehSimpleLayer
+from TmsForKorea.weblayers.ngii_maps import OlNgiiStreetLayer, OlNgiiBlankLayer, OlNgiiEnglishLayer, OlNgiiHighDensityLayer, OlNgiiColorBlindLayer
+
 from dlg_report_error import DlgReportError
 
 from DockableMirrorMap.dockableMirrorMap import DockableMirrorMap
@@ -103,8 +107,8 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
         ip = socket.gethostbyname(socket.gethostname())
         # 지리원 내부 IP 확인
-        if re.match(r"10\.98\..*", ip) is not None:
-        # if False:
+        # if re.match(r"10\.98\..*", ip) is not None:
+        if False:
             self.btnLoadTms.setVisible(False)
             self.btnLoadBaseMap.setVisible(True)
         else:
@@ -327,14 +331,13 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         # rasterLyr.isValid()
         # QgsMapLayerRegistry.instance().addMapLayers([rasterLyr])
 
-        from qgis import utils
-        try:
-            internetMap = utils.plugins['tmsforkorea']
-            # internetMap.addNgiiMap()
-            # internetMap.addLayer(OlNgiiStreetLayer())
-            internetMap.addLayer(OlDaumStreetLayer())
-        except:
-            raise Exception(u"TmsForKorea 플러그인을 먼저 설치하셔야 합니다.")
+        internetMap = TmsForKorea.classFactory(self.iface)
+        # internetMap.addLayer(OlDaumStreetLayer())
+        # internetMap.addLayer(OlDaumHybridLayer())
+        # internetMap.addLayer(OlNaverStreetLayer())
+        # internetMap.addLayer(OlOllehStreetLayer())
+        # internetMap.addLayer(OlOllehHybridLayer())
+        internetMap.addLayer(OlOllehSimpleLayer())
 
     def loadWms(self, layerList, title):
         layersText = u"&layers=".join(layerList)

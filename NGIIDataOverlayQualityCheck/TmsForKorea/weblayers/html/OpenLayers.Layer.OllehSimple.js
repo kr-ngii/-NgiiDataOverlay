@@ -9,12 +9,11 @@
 
 OpenLayers.Layer.OllehStreet = OpenLayers.Class(OpenLayers.Layer.XYZ, {
 
-    // http://tile.gis.kt.com/20180406/base.default/11/3288/3039.png
     // http://14.63.242.21/BaseMap/light4.07.1_0725/layers/_alllayers/l11/r00000cd6/c00000be0.png
     name: "OllehStreetMap",
     url: [
         // "http://map.ktgis.com/BaseMap/olleh5.08.1_0827/layers/_alllayers/l${z}/r${y}/c${x}.png"
-        "http://tile.gis.kt.com/20180406/base.default/l${z}/r${y}/c${x}.png"
+        "http://14.63.242.21/BaseMap/light4.07.1_0725/layers/_alllayers/l${z}/r${y}/c${x}.png"
     ],
 
     resolutions: [2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5],

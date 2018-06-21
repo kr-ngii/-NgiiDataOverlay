@@ -89,3 +89,8 @@ class OlOllehCadstralLayer(OlOllehMapsLayer):
 
     def __init__(self):
         OlOllehMapsLayer.__init__(self, name='Olleh Cadstral', html='olleh_cadastral.html')
+
+class OlOllehSimpleLayer(OlOllehMapsLayer):
+
+    def __init__(self):
+        OlOllehMapsLayer.__init__(self, name='Olleh Simple', html='olleh_simple.html')
