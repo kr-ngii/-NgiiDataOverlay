@@ -600,7 +600,7 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
         for layerName in layerList:
             self.lblStatus.setText(u"{} 레이어 읽는 중...".format(layerName))
             j += 1
-            self.self.progressMain.setValue(j)
+            self.progressMain.setValue(j)
             force_gui_update()
 
             if platform.system() == 'Windows':
