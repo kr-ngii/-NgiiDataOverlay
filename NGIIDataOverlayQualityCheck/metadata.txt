@@ -10,7 +10,7 @@
 name=NGII Data Overlay Quality Check
 qgisMinimumVersion=2.14
 description=국토지리정보원 공간정보 중첩 검사 툴
-version=0.91
+version=0.92
 author=NGII
 email=ngii.spt@gmail.com
 
