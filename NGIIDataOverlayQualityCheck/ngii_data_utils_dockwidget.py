@@ -102,8 +102,9 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         self.lastDockableMirror = 0
 
         ip = socket.gethostbyname(socket.gethostname())
-        # TODO: 지리원 내부 IP 확인
-        if re.match(r"172\..*", ip) is not None:
+        # 지리원 내부 IP 확인
+        if re.match(r"10\.98\..*", ip) is not None:
+        # if False:
             self.btnLoadTms.setVisible(False)
             self.btnLoadBaseMap.setVisible(True)
         else:
@@ -339,7 +340,8 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         layersText = u"&layers=".join(layerList)
         stylesText = u"&styles=" * len(layerList)
         # urlWithParams = u'crs=EPSG:4326&dpiMode=7&format=image/png&layers=tn_buld&styles=&layers=tn_river_bndry&styles=&url=http://seoul.gaia3d.com:8989/geoserver/ngii/wms?'.format(",".join(layerList))
-        urlWithParams = u'crs=EPSG:51796&dpiMode=7&format=image/png&layers={}{}&url=http://seoul.gaia3d.com:8989/geoserver/ngii/wms?'.format(layersText, stylesText)
+        # urlWithParams = u'crs=EPSG:5179&dpiMode=7&format=image/png&layers={}{}&url=http://seoul.gaia3d.com:8989/geoserver/wms?'.format(layersText, stylesText)
+        urlWithParams = u'crs=EPSG:5179&dpiMode=7&format=image/png&layers={}{}&url=http://10.98.25.39:8080/geoserver/wms?'.format(layersText, stylesText)
         self.debug(urlWithParams)
         rlayer = QgsRasterLayer(urlWithParams, title, 'wms')
         rlayer.isValid()
@@ -352,31 +354,11 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
             self.alert(u"1:50,000 보다 크게 확대하셔야 사용 가능합니다.")
             return
 
+        # TODO: 레이어를 선택할 수 있는 대화상자를 만들어야 한다.
         # layerList = ["tn_alpt","tn_arafc","tn_arhfc","tn_arpgr","tn_arrfc","tn_arsfc","tn_arwfc","tn_bcycl_ctln","tn_buld","tn_buld_adcls","tn_ctprvn_bndry","tn_ctrln","tn_emd_bndry","tn_fclty_zone_bndry","tn_fmlnd_bndry","tn_ftpth_bndry","tn_ftpth_ctln","tn_lkmh","tn_lnafc","tn_lnpgr","tn_lnrfc","tn_lnsfc","tn_mtc_bndry","tn_ptafc","tn_pthfc","tn_ptpgr","tn_ptrfc","tn_ptsfc","tn_ptwfc","tn_river_bndry","tn_river_bt","tn_river_ctln","tn_rlroad_bndry","tn_rlroad_ctln","tn_rodway_bndry","tn_rodway_ctln","tn_shorline","tn_signgu_bndry","tn_wtcors_fclty"]
-        layerList = ["tn_shorline","tn_lkmh", "tn_river_bt","tn_river_bndry","tn_river_ctln", "tn_fmlnd_bndry","tn_rodway_bndry","tn_rodway_ctln","tn_ctrln","tn_buld_adcls","tn_buld"]
-        self.loadWms(layerList, u'국토기본정보(전체)')
-
-    # def _on_click_btnLoadOnmapBaseMap(self):
-    #     canvas = self.iface.mapCanvas()
-    #     scale = canvas.scale()
-    #     if scale > 50000:
-    #         self.alert(u"1:50,000 보다 크게 확대하셔야 사용 가능합니다.")
-    #         return
-    #
-    #     # layerList = ["tn_river_bt","tn_fmlnd_bndry","tn_rodway_bndry","tn_arrfc","tn_ctrln","tn_emd_bndry","tn_signgu_bndry","tn_ctprvn_bndry","tn_buld"]
-    #     layerList = ["tn_river_bt","tn_fmlnd_bndry","tn_rodway_bndry","tn_rodway_ctln","tn_ctrln","tn_buld"]
-    #     self.loadWms(layerList, u'국토기본정보(온맵해당)')
-
-    # def _on_click_btnLoadInternetBaseMap(self):
-    #     canvas = self.iface.mapCanvas()
-    #     scale = canvas.scale()
-    #     if scale > 50000:
-    #         self.alert(u"1:50,000 보다 크게 확대하셔야 사용 가능합니다.")
-    #         return
-    #
-    #     # layerList = ["tn_shorline","tn_river_bt","tn_river_bndry","tn_river_ctln", "tn_fmlnd_bndry","tn_rodway_bndry","tn_rodway_ctln","tn_arrfc","tn_ctrln","tn_emd_bndry","tn_signgu_bndry","tn_ctprvn_bndry","tn_buld"]
-    #     layerList = ["tn_shorline","tn_river_bt","tn_river_bndry","tn_river_ctln", "tn_fmlnd_bndry","tn_rodway_bndry","tn_rodway_ctln","tn_ctrln","tn_buld"]
-    #     self.loadWms(layerList, u'국토기본정보(인터넷지도해당)')
+        # layerList = ["tn_shorline","tn_lkmh", "tn_river_bt","tn_river_bndry","tn_river_ctln", "tn_fmlnd_bndry","tn_rodway_bndry","tn_rodway_ctln","tn_ctrln","tn_buld_adcls","tn_buld"]
+        layerList = ["ngd_all"]
+        self.loadWms(layerList, u'국토기본정보')
 
     def _on_click_btnReportError(self):
         if self.displayDebug:
