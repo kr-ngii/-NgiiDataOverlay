@@ -64,25 +64,25 @@ class OlOllehMapsLayer(WebLayerOlleh5179):
 class OlOllehStreetLayer(OlOllehMapsLayer):
 
     def __init__(self):
-        OlOllehMapsLayer.__init__(self, name='Olleh Street', html='olleh_street.html')
+        OlOllehMapsLayer.__init__(self, name=u'올레지도', html='olleh_street.html')
 
 
 class OlOllehHybridLayer(OlOllehMapsLayer):
 
     def __init__(self):
-        OlOllehMapsLayer.__init__(self, name='Olleh Hybrid', html='olleh_hybrid.html')
+        OlOllehMapsLayer.__init__(self, name=u'올레위성', html='olleh_hybrid.html')
 
 
 class OlOllehSatelliteLayer(OlOllehMapsLayer):
 
     def __init__(self):
-        OlOllehMapsLayer.__init__(self, name='Olleh Satellite', html='olleh_satellite.html')
+        OlOllehMapsLayer.__init__(self, name=u'Olleh Satellite', html='olleh_satellite.html')
 
 
 class OlOllehPhysicalLayer(OlOllehMapsLayer):
 
     def __init__(self):
-        OlOllehMapsLayer.__init__(self, name='Olleh Physical', html='olleh_physical.html')
+        OlOllehMapsLayer.__init__(self, name=u'Olleh Physical', html='olleh_physical.html')
 
 
 class OlOllehCadstralLayer(OlOllehMapsLayer):
@@ -93,4 +93,4 @@ class OlOllehCadstralLayer(OlOllehMapsLayer):
 class OlOllehSimpleLayer(OlOllehMapsLayer):
 
     def __init__(self):
-        OlOllehMapsLayer.__init__(self, name='Olleh Simple', html='olleh_simple.html')
+        OlOllehMapsLayer.__init__(self, name=u'올래경량', html='olleh_simple.html')

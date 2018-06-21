@@ -64,47 +64,47 @@ class OlNgiiMapsLayer(WebLayerNgii5179):
 class OlNgiiStreetLayer(OlNgiiMapsLayer):
 
     def __init__(self):
-        OlNgiiMapsLayer.__init__(self, name='NGII Street', html='ngii_street.html')
+        OlNgiiMapsLayer.__init__(self, name=u'지리원지도', html='ngii_street.html')
 
 
 class OlNgiiPhotoLayer(OlNgiiMapsLayer):
 
     def __init__(self):
-        OlNgiiMapsLayer.__init__(self, name='NGII Arial Photo', html='ngii_photo.html')
+        OlNgiiMapsLayer.__init__(self, name=u'지리원정사영상', html='ngii_photo.html')
 
 
 
 class OlNgiiBlankLayer(OlNgiiMapsLayer):
 
     def __init__(self):
-        OlNgiiMapsLayer.__init__(self, name='NGII Blank', html='ngii_white.html')
+        OlNgiiMapsLayer.__init__(self, name=u'지리원백지도', html='ngii_white.html')
 
 
 class OlNgiiEnglishLayer(OlNgiiMapsLayer):
 
     def __init__(self):
-        OlNgiiMapsLayer.__init__(self, name='NGII English', html='ngii_english.html')
+        OlNgiiMapsLayer.__init__(self, name=u'지리원영문', html='ngii_english.html')
 
 
 class OlNgiiChineseLayer(OlNgiiMapsLayer):
 
     def __init__(self):
-        OlNgiiMapsLayer.__init__(self, name='NGII Chinese', html='ngii_chinese.html')
+        OlNgiiMapsLayer.__init__(self, name=u'지리원중문', html='ngii_chinese.html')
 
 
 class OlNgiiJapaneseLayer(OlNgiiMapsLayer):
 
     def __init__(self):
-        OlNgiiMapsLayer.__init__(self, name='NGII Japanese', html='ngii_japanese.html')
+        OlNgiiMapsLayer.__init__(self, name=u'지리원일문', html='ngii_japanese.html')
 
 
 class OlNgiiHighDensityLayer(OlNgiiMapsLayer):
 
     def __init__(self):
-        OlNgiiMapsLayer.__init__(self, name='NGII High-Density', html='ngii_highdensity.html')
+        OlNgiiMapsLayer.__init__(self, name=u'지리원큰글씨', html='ngii_highdensity.html')
 
 
 class OlNgiiColorBlindLayer(OlNgiiMapsLayer):
 
     def __init__(self):
-        OlNgiiMapsLayer.__init__(self, name='NGII Color-Blind', html='ngii_colorblind.html')
+        OlNgiiMapsLayer.__init__(self, name=u'지리원색각', html='ngii_colorblind.html')

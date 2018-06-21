@@ -107,7 +107,7 @@ class OpenlayersController(QObject):
 
         self.timerMax = QTimer()
         self.timerMax.setSingleShot(True)
-        self.timerMax.setInterval(1500)  # TODO: different timeouts for map types
+        self.timerMax.setInterval(3000)  # TODO: different timeouts for map types
         self.timerMax.timeout.connect(self.mapTimeout)
 
     @pyqtSlot()
@@ -345,7 +345,7 @@ class OpenlayersLayer(QgsPluginLayer):
         return True
 
     def setLayerType(self, layerType):
-        qDebug(" setLayerType: %s" % layerType.layerTypeName)
+        # qDebug(u" setLayerType: %s" % layerType.layerTypeName)
         self.layerType = layerType
         self.setCustomProperty(OpenlayersLayer.LAYER_PROPERTY, layerType.layerTypeName)
         coordRefSys = self.layerType.coordRefSys(None)  # FIXME

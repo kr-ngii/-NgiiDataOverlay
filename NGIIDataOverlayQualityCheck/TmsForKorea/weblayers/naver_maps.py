@@ -64,13 +64,13 @@ class OlNaverMapsLayer(WebLayerNaver5179):
 class OlNaverStreetLayer(OlNaverMapsLayer):
 
     def __init__(self):
-        OlNaverMapsLayer.__init__(self, name='Naver Street', html='naver_street.html')
+        OlNaverMapsLayer.__init__(self, name=u'네이버지도', html='naver_street.html')
 
 
 class OlNaverHybridLayer(OlNaverMapsLayer):
 
     def __init__(self):
-        OlNaverMapsLayer.__init__(self, name='Naver Hybrid', html='naver_hybrid.html')
+        OlNaverMapsLayer.__init__(self, name=u'네이버위성', html='naver_hybrid.html')
 
 
 class OlNaverSatelliteLayer(OlNaverMapsLayer):

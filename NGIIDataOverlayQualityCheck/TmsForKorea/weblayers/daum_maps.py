@@ -64,13 +64,14 @@ class OlDaumMapsLayer(WebLayerDaum5181):
 class OlDaumStreetLayer(OlDaumMapsLayer):
 
     def __init__(self):
-        OlDaumMapsLayer.__init__(self, name='Daum Street', html='daum_street.html')
+        # OlDaumMapsLayer.__init__(self, name='Daum Street', html='daum_street.html')
+        OlDaumMapsLayer.__init__(self, name=u'다음지도', html='daum_street.html')
 
 
 class OlDaumHybridLayer(OlDaumMapsLayer):
 
     def __init__(self):
-        OlDaumMapsLayer.__init__(self, name='Daum Hybrid', html='daum_hybrid.html')
+        OlDaumMapsLayer.__init__(self, name=u'다음스카이뷰', html='daum_hybrid.html')
 
 
 class OlDaumSatelliteLayer(OlDaumMapsLayer):

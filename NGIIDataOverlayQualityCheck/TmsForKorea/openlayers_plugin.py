@@ -175,7 +175,22 @@ class OpenlayersPlugin:
         if layer.isValid():
             coordRefSys = layerType.coordRefSys(self.canvasCrs())
             self.setMapCrs(coordRefSys)
-            QgsMapLayerRegistry.instance().addMapLayer(layer)
+
+            # 최상위 그룹 찾고
+            root = QgsProject.instance().layerTreeRoot()
+
+            # '인터넷지도' 그룹이 있는지 확인
+            layerTreeGroup = root.findGroup(u"인터넷지도")
+
+            if layerTreeGroup:  # 있으면 속한 레이어 지우고
+                for layerNode in layerTreeGroup.findLayers():
+                    extLayer = layerNode.layer()
+                    layerTreeGroup.removeLayer(extLayer)
+            else:  # 없으면 만들기
+                layerTreeGroup = root.addGroup(u"인터넷지도")
+
+            QgsMapLayerRegistry.instance().addMapLayer(layer, False)
+            layerTreeGroup.insertChildNode(1, QgsLayerTreeLayer(layer))
 
             # last added layer is new reference
             self.setReferenceLayer(layer)
