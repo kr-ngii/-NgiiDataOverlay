@@ -16,6 +16,20 @@
   <layout class="QGridLayout" name="gridLayout_3">
    <item row="0" column="0">
     <layout class="QGridLayout" name="gridLayout">
+     <item row="1" column="0">
+      <widget class="QRadioButton" name="rdoNgiiContrast">
+       <property name="text">
+        <string>지리원색각</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="0">
+      <widget class="QRadioButton" name="rdoNgiiJpn">
+       <property name="text">
+        <string>지리원일문</string>
+       </property>
+      </widget>
+     </item>
      <item row="0" column="0">
       <widget class="QRadioButton" name="rdoNgiiMap">
        <property name="text">
@@ -23,52 +37,31 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="0">
-      <widget class="QRadioButton" name="rdoNgiiPhoto">
-       <property name="text">
-        <string>지리원영상</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="0">
-      <widget class="QRadioButton" name="rdoNgiiContrast">
-       <property name="text">
-        <string>지리원색각</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="0">
-      <widget class="QRadioButton" name="rdoNgiiBigFont">
-       <property name="text">
-        <string>지리원큰글씨</string>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="0">
-      <widget class="QRadioButton" name="rdoNgiiWhite">
-       <property name="text">
-        <string>지리원백지도</string>
-       </property>
-      </widget>
-     </item>
      <item row="5" column="0">
-      <widget class="QRadioButton" name="rdoNgiiEng">
-       <property name="text">
-        <string>지리원영문</string>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="0">
       <widget class="QRadioButton" name="rdoNgiiChn">
        <property name="text">
         <string>지리원중문</string>
        </property>
       </widget>
      </item>
-     <item row="7" column="0">
-      <widget class="QRadioButton" name="rdoNgiiJpn">
+     <item row="2" column="0">
+      <widget class="QRadioButton" name="rdoNgiiBigFont">
        <property name="text">
-        <string>지리원일문</string>
+        <string>지리원큰글씨</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QRadioButton" name="rdoNgiiWhite">
+       <property name="text">
+        <string>지리원백지도</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="QRadioButton" name="rdoNgiiEng">
+       <property name="text">
+        <string>지리원영문</string>
        </property>
       </widget>
      </item>

@@ -168,7 +168,7 @@ class OpenlayersPlugin:
         # Unregister plugin layer type
         QgsPluginLayerRegistry.instance().removePluginLayerType(OpenlayersLayer.LAYER_TYPE)
 
-    def addLayer(self, layerType):
+    def addLayer(self, layerType, layerTreeGroup=None):
         layer = OpenlayersLayer(self.iface, self._olLayerTypeRegistry)
         layer.setLayerName(layerType.displayName)
         layer.setLayerType(layerType)
@@ -176,21 +176,11 @@ class OpenlayersPlugin:
             coordRefSys = layerType.coordRefSys(self.canvasCrs())
             self.setMapCrs(coordRefSys)
 
-            # 최상위 그룹 찾고
-            root = QgsProject.instance().layerTreeRoot()
-
-            # '인터넷지도' 그룹이 있는지 확인
-            layerTreeGroup = root.findGroup(u"인터넷지도")
-
-            if layerTreeGroup:  # 있으면 속한 레이어 지우고
-                for layerNode in layerTreeGroup.findLayers():
-                    extLayer = layerNode.layer()
-                    layerTreeGroup.removeLayer(extLayer)
-            else:  # 없으면 만들기
-                layerTreeGroup = root.addGroup(u"인터넷지도")
-
-            QgsMapLayerRegistry.instance().addMapLayer(layer, False)
-            layerTreeGroup.insertChildNode(1, QgsLayerTreeLayer(layer))
+            if layerTreeGroup:
+                QgsMapLayerRegistry.instance().addMapLayer(layer, False)
+                layerTreeGroup.insertChildNode(1, QgsLayerTreeLayer(layer))
+            else:
+                QgsMapLayerRegistry.instance().addMapLayer(layer)
 
             # last added layer is new reference
             self.setReferenceLayer(layer)

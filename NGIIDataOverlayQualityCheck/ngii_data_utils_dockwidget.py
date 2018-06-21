@@ -301,41 +301,58 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
                 self._imageLoader.runImport(rasterPath)
 
     def _on_click_btnLoadTms(self):
-        internetMap = TmsForKorea.classFactory(self.iface)
-
+        # 지도종류 선택 받기
         dlg = DlgMapSelect(self.iface.mainWindow())
         rc = dlg.exec_()
         if rc != QDialog.Accepted:
             return
 
+        internetMap = TmsForKorea.classFactory(self.iface)
+
+        # 최상위 그룹 찾고
+        root = QgsProject.instance().layerTreeRoot()
+
+        # '인터넷지도' 그룹이 있는지 확인
+        layerTreeGroup = root.findGroup(u"인터넷지도")
+
+        if layerTreeGroup:  # 있으면 속한 레이어 지우고
+            for layerNode in layerTreeGroup.findLayers():
+                extLayer = layerNode.layer()
+                layerTreeGroup.removeLayer(extLayer)
+        else:  # 없으면 만들기
+            layerTreeGroup = root.addGroup(u"인터넷지도")
+
         if dlg.rdoNgiiMap.isChecked():
-            internetMap.addLayer(OlNgiiStreetLayer())
+            internetMap.addLayer(OlNgiiStreetLayer(), layerTreeGroup)
         elif dlg.rdoNgiiContrast.isChecked():
-            internetMap.addLayer(OlNgiiColorBlindLayer())
+            internetMap.addLayer(OlNgiiColorBlindLayer(), layerTreeGroup)
         elif dlg.rdoNgiiBigFont.isChecked():
-            internetMap.addLayer(OlNgiiHighDensityLayer())
+            internetMap.addLayer(OlNgiiHighDensityLayer(), layerTreeGroup)
         elif dlg.rdoNgiiWhite.isChecked():
-            internetMap.addLayer(OlNgiiBlankLayer())
+            internetMap.addLayer(OlNgiiBlankLayer(), layerTreeGroup)
         elif dlg.rdoNgiiEng.isChecked():
-            internetMap.addLayer(OlNgiiEnglishLayer())
+            internetMap.addLayer(OlNgiiEnglishLayer(), layerTreeGroup)
         elif dlg.rdoNgiiChn.isChecked():
-            internetMap.addLayer(OlNgiiChineseLayer())
+            internetMap.addLayer(OlNgiiChineseLayer(), layerTreeGroup)
         elif dlg.rdoNgiiJpn.isChecked():
-            internetMap.addLayer(OlNgiiJapaneseLayer())
+            internetMap.addLayer(OlNgiiJapaneseLayer(), layerTreeGroup)
         elif dlg.rdoDaumMap.isChecked():
-            internetMap.addLayer(OlDaumStreetLayer())
+            internetMap.addLayer(OlDaumStreetLayer(), layerTreeGroup)
         elif dlg.rdoDaumPhoto.isChecked():
-            internetMap.addLayer(OlDaumHybridLayer())
+            internetMap.addLayer(OlDaumHybridLayer(), layerTreeGroup)
         elif dlg.rdoNaverMap.isChecked():
-            internetMap.addLayer(OlNaverStreetLayer())
+            internetMap.addLayer(OlNaverStreetLayer(), layerTreeGroup)
         elif dlg.rdoNaverPhoto.isChecked():
-            internetMap.addLayer(OlNaverHybridLayer())
+            internetMap.addLayer(OlNaverHybridLayer(), layerTreeGroup)
         elif dlg.rdoOllehMap.isChecked():
-            internetMap.addLayer(OlOllehStreetLayer())
+            internetMap.addLayer(OlOllehStreetLayer(), layerTreeGroup)
         elif dlg.rdoOllehImage.isChecked():
-            internetMap.addLayer(OlOllehHybridLayer())
+            internetMap.addLayer(OlOllehHybridLayer(), layerTreeGroup)
         elif dlg.rdoOllehLight.isChecked():
-            internetMap.addLayer(OlOllehSimpleLayer())
+            internetMap.addLayer(OlOllehSimpleLayer(), layerTreeGroup)
+
+        # 투명도 조절이나 색상 변경이 안된다.
+        # self.appendGroupBox(layerTreeGroup, "TMS")
 
     def loadWms(self, layerList, title):
         layersText = u"&layers=".join(layerList)
