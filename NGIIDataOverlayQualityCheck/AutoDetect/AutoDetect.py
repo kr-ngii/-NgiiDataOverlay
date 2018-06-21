@@ -17,6 +17,8 @@ from PyQt4 import QtGui, uic
 from qgis.core import *
 from osgeo import gdal, ogr, osr
 
+from .. calc_utils import force_gui_update
+
 # class SelectInspectData(QDialog, Ui_SelectInspectData):
 DbInfoDialog_FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'DbInfo.ui'))
 
@@ -485,7 +487,7 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
                 self.dropSchema(self.EDIT_SCHEMA)
 
             # 기성과 insert
-            if self.lblOrgFolder.text()[:5].lower() == ".gpkg":
+            if self.lblOrgFolder.text()[-5:].lower() == ".gpkg":
                 dataType = "gpkg"
             else:
                 dataType = "shp"
@@ -496,7 +498,7 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
                 return
 
             # 남품성과 insert
-            if self.lblEditFolder.text()[:5].lower() == ".gpkg":
+            if self.lblEditFolder.text()[-5:].lower() == ".gpkg":
                 dataType = "gpkg"
             else:
                 dataType = "shp"
@@ -593,14 +595,19 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
         # pg = pgDriver.CreateDataSource(pgConnectInfo)
         pg = gdal.OpenEx(pgConnectInfo, gdal.OF_VECTOR, ["PostgreSQL"], ["SCHEMA={}".format(schema), 'PRECISION=NO'])
 
+        self.progressMain.setMaximum(len(layerList))
+        j = 0
         for layerName in layerList:
+            self.lblStatus.setText(u"{} 레이어 읽는 중...".format(layerName))
+            j += 1
+            self.self.progressMain.setValue(j)
+            force_gui_update()
+
             if platform.system() == 'Windows':
                 shpLayer = os.path.join(folder.replace("/", "\\"), layerName) + '.shp'
             else:
                 shpLayer = os.path.join(folder, layerName) + '.shp'
 
-            # TODO: CopyLayer를 이용해 보자
-            # https://pcjericks.github.io/py-gdalogr-cookbook/vector_layers.html#load-data-to-memory
 
             # TODO: 인코딩 자동설정
             shp = gdal.OpenEx(shpLayer, gdal.OF_VECTOR, ["ESRI Shapefile"], ["SHAPE_ENCODING=UTF8", "ENCODING=UTF8", 'PRECISION=NO'])
@@ -636,15 +643,15 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
                 pgLayer.CreateFeature(pgFeature)
                 layerIdx = layerIdx + 1
                 self.parent.prgSub.setValue(layerIdx)
+                force_gui_update()
 
             sql = u"CREATE INDEX ON {}.{} USING GIST (wkb_geometry)".format(schema, layerName)
             pg.ExecuteSQL(sql.encode("UTF8"))
 
         return True
 
-    # TODO: ogr 이용해 한글 문제 없게 수정 필요
-    def __insertGpkg(self, schema, inspectData):
-        self.parent.info(u"{} 파일을 읽고 있습니다.".format(inspectData))
+    def __insertGpkg(self, schema, filePath, layerList):
+        self.parent.info(u"{} 파일을 읽고 있습니다.".format(filePath))
 
         createResult = self.createSchema(schema)
         if not createResult:
@@ -654,17 +661,60 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
             .format(host=self.__dbHost, port=self.__dbPort, dbname=self.__dbNm,
                     user=self.__dbUser, password=self.__dbPassword)
 
-        commandList = ['ogr2ogr', '-a_srs', 'EPSG:5179', '-f', 'PostgreSQL',
-                       pgConnectInfo, inspectData, '-nlt', 'PROMOTE_TO_MULTI',
-                       '-lco', 'SCHEMA={schema}'.format(schema=schema)]
+        # 좌표계 정보 생성
+        crs = osr.SpatialReference()
+        crs.ImportFromEPSG(5179)
 
-        try:
-            self.parent.debug("Command : " + ' '.join(commandList))
-            threadExecuteCmd(commandList)
+        pg = gdal.OpenEx(pgConnectInfo, gdal.OF_VECTOR, ["PostgreSQL"], ["SCHEMA={}".format(schema), 'PRECISION=NO'])
+        gpkg = gdal.OpenEx(filePath, gdal.OF_VECTOR, ["GPKG"])
 
-        except Exception as e:
-            self.parent.error(u'GPKG를 DB에 넣는 도중 문제가 발생하였습니다.')
-            return
+        j = 0
+        self.progressMain.setMaximum(len(layerList))
+        for layerName in layerList:
+            self.lblStatus.setText(u"{} 레이어 읽는 중...".format(layerName))
+
+            j += 1
+            self.progressMain.setValue(j)
+            force_gui_update()
+
+            gpkgLayer = gpkg.GetLayer(layerName.encode("UTF8"))
+
+            # 원본 레이어 정보 얻기
+            geomType = gpkgLayer.GetGeomType()
+            layerDefinition = gpkgLayer.GetLayerDefn()
+
+            # 원본 레이어와 동일하게 대상 레이어 만들기
+            pgLayer = pg.CreateLayer("{}.{}".format(schema, layerName).encode('UTF8'), crs, geom_type=geomType)
+            for i in range(layerDefinition.GetFieldCount()):
+                fieldDefn = layerDefinition.GetFieldDefn(i)
+                # 이 조건절이 없으면 변환시 precision 문제로 인한 overflow 오류가 난다.
+                if fieldDefn.GetType() == ogr.OFTReal:
+                    fieldDefn.SetWidth(0)
+                    fieldDefn.SetPrecision(0)
+                pgLayer.CreateField(fieldDefn)
+
+            pgLayerDefn = pgLayer.GetLayerDefn()
+            entCount = len(gpkgLayer)
+            layerIdx = 0
+            self.parent.prgSub.setMinimum(0)
+            self.parent.prgSub.setMaximum(entCount)
+            # 원본 레이어의 객체 돌며
+            for shpFeature in gpkgLayer:
+                # 동일한 대상 객체 생성
+                pgFeature = ogr.Feature(pgLayerDefn)
+                for i in range(pgLayerDefn.GetFieldCount()):
+                    pgFeature.SetField(pgLayerDefn.GetFieldDefn(i).GetNameRef(), shpFeature.GetField(i))
+                geom = shpFeature.GetGeometryRef()
+                pgFeature.SetGeometry(geom)
+                pgLayer.CreateFeature(pgFeature)
+                layerIdx = layerIdx + 1
+                self.parent.prgSub.setValue(layerIdx)
+                force_gui_update()
+
+            sql = u"CREATE INDEX ON {}.{} USING GIST (wkb_geometry)".format(schema, layerName)
+            pg.ExecuteSQL(sql.encode("UTF8"))
+
+        return True
 
     # 기본 SQL
     def selectSchemaList(self):
