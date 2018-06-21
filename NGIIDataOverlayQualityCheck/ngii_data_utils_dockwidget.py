@@ -53,7 +53,7 @@ from TmsForKorea.weblayers.ngii_maps import OlNgiiStreetLayer, OlNgiiPhotoLayer,
     OlNgiiColorBlindLayer, OlNgiiEnglishLayer, OlNgiiChineseLayer, OlNgiiJapaneseLayer
 
 from dlg_report_error import DlgReportError
-
+from map_select_dlg import DlgMapSelect
 from DockableMirrorMap.dockableMirrorMap import DockableMirrorMap
 
 
@@ -301,53 +301,41 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
                 self._imageLoader.runImport(rasterPath)
 
     def _on_click_btnLoadTms(self):
-        # xml = """<GDAL_WMS>
-        # <Service name="TMS">
-        #   <ServerUrl>http://localhost/cgi-bin/tms.py?${x}/${y}/${z}</ServerUrl>
-        #   <ImageFormat>image/png</ImageFormat>
-        #   <SRS>EPSG:5179</SRS>
-        # </Service>
-        # <DataWindow>
-        #   <UpperLeftX>-200000.0</UpperLeftX>
-        #   <UpperLeftY>4000000.0</UpperLeftY>
-        #   <LowerRightX>31824123.62</LowerRightX>
-        #   <LowerRightY>-28024123.62</LowerRightY>
-        #   <TileLevel>14</TileLevel>
-        #   <YOrigin>bottom</YOrigin>
-        # </DataWindow>
-        # <Projection>EPSG:5179</Projection>
-        # <BlockSizeX>256</BlockSizeX>
-        # <BlockSizeY>256</BlockSizeY>
-        # <BandsCount>3</BandsCount>
-        # <ZeroBlockHttpCodes>204,403,404,500,502,503,504</ZeroBlockHttpCodes>
-        # <Cache>
-        #         <Path>/temp/tms</Path>
-        # </Cache>
-        # </GDAL_WMS>"""
-        #
-        # vfn = "/vsimem/ngii.xml"
-        # gdal.FileFromMemBuffer(vfn, xml)
-        #
-        # rasterLyr = QgsRasterLayer(vfn, u"국가인터넷지도")
-        # rasterLyr.isValid()
-        # QgsMapLayerRegistry.instance().addMapLayers([rasterLyr])
-
         internetMap = TmsForKorea.classFactory(self.iface)
-        # internetMap.addLayer(OlDaumStreetLayer())
-        # internetMap.addLayer(OlDaumHybridLayer())
-        # internetMap.addLayer(OlNaverStreetLayer())
-        # internetMap.addLayer(OlNaverHybridLayer())
-        # internetMap.addLayer(OlOllehStreetLayer())
-        # internetMap.addLayer(OlOllehHybridLayer())
-        # internetMap.addLayer(OlOllehSimpleLayer())
-        # internetMap.addLayer(OlNgiiStreetLayer())
-        ## internetMap.addLayer(OlNgiiPhotoLayer())
-        # internetMap.addLayer(OlNgiiColorBlindLayer())
-        # internetMap.addLayer(OlNgiiHighDensityLayer())
-        # internetMap.addLayer(OlNgiiBlankLayer())
-        # internetMap.addLayer(OlNgiiEnglishLayer())
-        internetMap.addLayer(OlNgiiChineseLayer())
-        # internetMap.addLayer(OlNgiiJapaneseLayer())
+
+        dlg = DlgMapSelect(self.iface.mainWindow())
+        rc = dlg.exec_()
+        if rc != QDialog.Accepted:
+            return
+
+        if dlg.rdoNgiiMap.isChecked():
+            internetMap.addLayer(OlNgiiStreetLayer())
+        elif dlg.rdoNgiiContrast.isChecked():
+            internetMap.addLayer(OlNgiiColorBlindLayer())
+        elif dlg.rdoNgiiBigFont.isChecked():
+            internetMap.addLayer(OlNgiiHighDensityLayer())
+        elif dlg.rdoNgiiWhite.isChecked():
+            internetMap.addLayer(OlNgiiBlankLayer())
+        elif dlg.rdoNgiiEng.isChecked():
+            internetMap.addLayer(OlNgiiEnglishLayer())
+        elif dlg.rdoNgiiChn.isChecked():
+            internetMap.addLayer(OlNgiiChineseLayer())
+        elif dlg.rdoNgiiJpn.isChecked():
+            internetMap.addLayer(OlNgiiJapaneseLayer())
+        elif dlg.rdoDaumMap.isChecked():
+            internetMap.addLayer(OlDaumStreetLayer())
+        elif dlg.rdoDaumPhoto.isChecked():
+            internetMap.addLayer(OlDaumHybridLayer())
+        elif dlg.rdoNaverMap.isChecked():
+            internetMap.addLayer(OlNaverStreetLayer())
+        elif dlg.rdoNaverPhoto.isChecked():
+            internetMap.addLayer(OlNaverHybridLayer())
+        elif dlg.rdoOllehMap.isChecked():
+            internetMap.addLayer(OlOllehStreetLayer())
+        elif dlg.rdoOllehImage.isChecked():
+            internetMap.addLayer(OlOllehHybridLayer())
+        elif dlg.rdoOllehLight.isChecked():
+            internetMap.addLayer(OlOllehSimpleLayer())
 
     def loadWms(self, layerList, title):
         layersText = u"&layers=".join(layerList)
