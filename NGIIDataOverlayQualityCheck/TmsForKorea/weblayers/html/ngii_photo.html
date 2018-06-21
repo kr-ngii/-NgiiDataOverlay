@@ -50,13 +50,15 @@
               loadEnd = true;
             }
 
-            // http://map.ngii.go.kr/proxys//proxy/proxyTile.jsp?apikey=04trYP9_xwLAfALjwZ-B8g&URL=http://210.117.198.63:8081/2015_map/lowV_map_tile/L19/18892/490757.png
-            var koreanlayer = new OpenLayers.Layer.TMS("NGII High Density",
-//              ['http://emap.ngii.go.kr:8082/proxy/proxy.jsp?url=http://210.117.198.63:8081/lowV_map_tile/'],
-              ['http://map.ngii.go.kr/edu/ngiiemapProxy?ngiiproxy=http://map.ngii.go.kr/proxys//proxy/proxyTile.jsp?apikey=04trYP9_xwLAfALjwZ-B8g&URL=http://210.117.198.63:8081/2015_map/lowV_map_tile/'],
+            // http://210.117.198.120:8081/o2map/services?service=WMTS&request=GetTile&version=1.0.0&layer=AIRPHOTO&style=_null&format=image/jpg&tilematrixset=NGIS_AIR&tilematrix=13&tilerow=995&tilecol=556
+            var koreanlayer = new OpenLayers.Layer.TMS("NGII Arial Photo",
+              [
+//                  'http://map.ngii.go.kr/edu/ngiiemapProxy?ngiiproxy=http://map.ngii.go.kr/proxys//proxy/proxyTile.jsp?apikey=04trYP9_xwLAfALjwZ-B8g&URL=http://210.117.198.62:8081/2015_map/korean_map_tile/'
+                  'http://210.117.198.120:8081/o2map/services?service=WMTS&request=GetTile&version=1.0.0&layer=AIRPHOTO&style=_null&format=image/jpg&tilematrixset=NGIS_AIR&'
+              ],
             {
               serviceVersion: '.', 
-              layername: 'LOW', 
+              layername: 'KOREAN', 
               alpha: true,
               type: 'png', 
               getURL: overlay_getTileURL,
@@ -74,10 +76,10 @@
           var res = this.map.getResolution(); 
           var x = Math.round((bounds.left - this.maxExtent.left) / (res * this.tileSize.w)); 
           var y = Math.round((bounds.bottom - this.maxExtent.bottom) / (res * this.tileSize.h)); 
-          var z = this.map.getZoom() + 6; 
+//          var z = this.map.getZoom() + 6;
+          var z = this.map.getZoom() + 4;
 
-          z = "L" + fillzero(z, 2);
-          return this.url + z + "/" + x + "/" + y + "." + this.type; 
+          return this.url + 'tilematrix=' + z + "&tilerow=" + x + "&tilecol" + y + "." + this.type;
         } 
 
         function fillzero(n, digits) { 

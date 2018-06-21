@@ -67,6 +67,13 @@ class OlNgiiStreetLayer(OlNgiiMapsLayer):
         OlNgiiMapsLayer.__init__(self, name='NGII Street', html='ngii_street.html')
 
 
+class OlNgiiPhotoLayer(OlNgiiMapsLayer):
+
+    def __init__(self):
+        OlNgiiMapsLayer.__init__(self, name='NGII Arial Photo', html='ngii_photo.html')
+
+
+
 class OlNgiiBlankLayer(OlNgiiMapsLayer):
 
     def __init__(self):
@@ -77,6 +84,18 @@ class OlNgiiEnglishLayer(OlNgiiMapsLayer):
 
     def __init__(self):
         OlNgiiMapsLayer.__init__(self, name='NGII English', html='ngii_english.html')
+
+
+class OlNgiiChineseLayer(OlNgiiMapsLayer):
+
+    def __init__(self):
+        OlNgiiMapsLayer.__init__(self, name='NGII Chinese', html='ngii_chinese.html')
+
+
+class OlNgiiJapaneseLayer(OlNgiiMapsLayer):
+
+    def __init__(self):
+        OlNgiiMapsLayer.__init__(self, name='NGII Japanese', html='ngii_japanese.html')
 
 
 class OlNgiiHighDensityLayer(OlNgiiMapsLayer):

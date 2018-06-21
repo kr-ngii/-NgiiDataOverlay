@@ -49,7 +49,8 @@ from TmsForKorea import *
 from TmsForKorea.weblayers.daum_maps import OlDaumStreetLayer, OlDaumHybridLayer
 from TmsForKorea.weblayers.naver_maps import OlNaverStreetLayer, OlNaverHybridLayer
 from TmsForKorea.weblayers.olleh_maps import OlOllehStreetLayer, OlOllehHybridLayer, OlOllehSimpleLayer
-from TmsForKorea.weblayers.ngii_maps import OlNgiiStreetLayer, OlNgiiBlankLayer, OlNgiiEnglishLayer, OlNgiiHighDensityLayer, OlNgiiColorBlindLayer
+from TmsForKorea.weblayers.ngii_maps import OlNgiiStreetLayer, OlNgiiPhotoLayer, OlNgiiBlankLayer, OlNgiiHighDensityLayer, \
+    OlNgiiColorBlindLayer, OlNgiiEnglishLayer, OlNgiiChineseLayer, OlNgiiJapaneseLayer
 
 from dlg_report_error import DlgReportError
 
@@ -335,14 +336,22 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         # internetMap.addLayer(OlDaumStreetLayer())
         # internetMap.addLayer(OlDaumHybridLayer())
         # internetMap.addLayer(OlNaverStreetLayer())
+        # internetMap.addLayer(OlNaverHybridLayer())
         # internetMap.addLayer(OlOllehStreetLayer())
         # internetMap.addLayer(OlOllehHybridLayer())
-        internetMap.addLayer(OlOllehSimpleLayer())
+        # internetMap.addLayer(OlOllehSimpleLayer())
+        # internetMap.addLayer(OlNgiiStreetLayer())
+        ## internetMap.addLayer(OlNgiiPhotoLayer())
+        # internetMap.addLayer(OlNgiiColorBlindLayer())
+        # internetMap.addLayer(OlNgiiHighDensityLayer())
+        # internetMap.addLayer(OlNgiiBlankLayer())
+        # internetMap.addLayer(OlNgiiEnglishLayer())
+        internetMap.addLayer(OlNgiiChineseLayer())
+        # internetMap.addLayer(OlNgiiJapaneseLayer())
 
     def loadWms(self, layerList, title):
         layersText = u"&layers=".join(layerList)
         stylesText = u"&styles=" * len(layerList)
-        # urlWithParams = u'crs=EPSG:4326&dpiMode=7&format=image/png&layers=tn_buld&styles=&layers=tn_river_bndry&styles=&url=http://seoul.gaia3d.com:8989/geoserver/ngii/wms?'.format(",".join(layerList))
         # urlWithParams = u'crs=EPSG:5179&dpiMode=7&format=image/png&layers={}{}&url=http://seoul.gaia3d.com:8989/geoserver/wms?'.format(layersText, stylesText)
         urlWithParams = u'crs=EPSG:5179&dpiMode=7&format=image/png&layers={}{}&url=http://10.98.25.39:8080/geoserver/wms?'.format(layersText, stylesText)
         self.debug(urlWithParams)
