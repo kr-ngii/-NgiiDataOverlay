@@ -28,7 +28,7 @@ repository=https://github.com/kr-ngii/NgiiDataOverlay
 # Tags are comma separated with spaces allowed
 tags=ngii
 
-homepage=https://kr-ngii.github.io
+homepage=https://kr-ngii.github.io/NgiiDataOverlay/
 category=Plugins
 icon=icon.png
 # experimental flag
