@@ -1,35 +1,29 @@
 ---
-name: Bug report
+name: 버그 리포트
 about: 버그 리포트를 올려주시면 최선을 다해 해결해 드리겠습니다.
 
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+**버그 설명**
+어떤 버그인지에 대한 명확하고 간결한 설명.
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+**재연 방법**
+버그를 재연하기 위한 동작 단계:
+1. '...' 기능을 실행한다.
+2. '....'을 클릭한다.
+3. '....'로 화면을 스크롤한다.
+4. 오류가 보인다.
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+**기대했던 동작**
+사용자가 예상했던 결과에 대한 명확하고 간결한 설명.
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+**스크린 캡처**
+가능하시다면, 문제를 설명하는데 도움이 될만한 슷크린 캡처를 추가해 주세요.
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+**운영환경 (사용자에 만제 아래 내용을 작성해 주세요):**
+ - 운영체제(OS): [예) 윈오우 10 64 Bit]
+ - QGIS 버전 [예) QGIS 2.18.21 64Bit]
+ - 중첩 분석 툴 버전 [예) 0.93]
 
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
-
-**Additional context**
-Add any other context about the problem here.
+**추가적인 내용**
+문제점에 대한 기타 정보들을 여기에 추가해 주세요.

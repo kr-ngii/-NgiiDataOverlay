@@ -1,17 +1,17 @@
 ---
-name: Feature request
+name: 개선요청
 about: 이 플러그인 개선을 위한 아이디어 제안
 
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+**사용자가 제안하는 기능이 어떤 문제와 관련있을까요? 설명 부탁드립니다.**
+어떤 문제가 있는 지 명확하고 간결하게 설명해 주세요. 예) 나는 항상 ~을 할 때 너무 힘들다.
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+**사용자가 원하는 개선방향 설명**
+어떻게 되면 좋을지에 대한 명확하고 간결한 설명.
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+**사용자가 고려하는 대안에 대한 설명**
+사용자가 고려하는 해결책이나 기능에 대한 명확하고 간결할 설명.
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+**추가적인 내용**
+개선요청에 대한 다른 내용이나 화면캡처 등을 여기에 추가해 주세요.
