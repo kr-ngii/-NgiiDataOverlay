@@ -8,18 +8,22 @@
 
 ## 사용자 지침서
 상세한 사용자 지침서는 아래의 링크에서 보실 수 있습니다.
+
 [사용자 지침서](docs/manual.md)
 
 ## 버그신고
 사용중 버그를 발견하시면 다음의 링크를 통해서 알려주세요. '한글로' 기록해 주시면 됩니다.
 최선을 다해 수정방법을 찾아보겠습니다.
+
 [버그신고](https://github.com/kr-ngii/NgiiDataOverlay/issues/new?template=bug_report.md)
 
 ## 개선요청
 쓰시다가 이렇게 하면 더 쉽게 작업을 할 수 있지 않을까 하는 것이 떠오르시면 아래의 링크를 통해 알려주세요.
+
 [개선요청](https://github.com/kr-ngii/NgiiDataOverlay/issues/new?template=feature_request.md)
 
 ## 기타 문의사항
 쓰시다가 버그도 아니고 개선요청도 아니지만 궁금한 것이 있으면 물어봐 주세요.
+
 [문의사항](https://github.com/kr-ngii/NgiiDataOverlay/issues/new?template=question.md)
 
