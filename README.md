@@ -22,3 +22,4 @@
 ## 기타 문의사항
 쓰시다가 버그도 아니고 개선요청도 아니지만 궁금한 것이 있으면 물어봐 주세요.
 [문의사항](https://github.com/kr-ngii/NgiiDataOverlay/issues/new?template=question.md)
+
