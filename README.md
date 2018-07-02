@@ -11,15 +11,14 @@
 [사용자 지침서](docs/manual.md)
 
 ## 버그신고
-사용중 버그를 발견하시면 다음의 Issue 링크를 통해서 알려주세요.
-초록색 [New Issue] 버튼을 누르고 '버그 리포트' 항목 옆의 [Get started] 버튼을 누르고 '한글로' 기록해 주시면 됩니다.
+사용중 버그를 발견하시면 다음의 링크를 통해서 알려주세요. '한글로' 기록해 주시면 됩니다.
 최선을 다해 수정방법을 찾아보겠습니다.
+[버그신고](https://github.com/kr-ngii/NgiiDataOverlay/issues/new?template=bug_report.md)
 
 ## 개선요청
 쓰시다가 이렇게 하면 더 쉽게 작업을 할 수 있지 않을까 하는 것이 떠오르시면 아래의 링크를 통해 알려주세요.
-사실은 버그신고와 동일한 Issue 링크이지만, 게시물을 만들 때 '개선요청' 항목 옆의 [Get started] 버튼을 누르고 기록해 주시면 됩니다.
+[개선요청](https://github.com/kr-ngii/NgiiDataOverlay/issues/new?template=feature_request.md)
 
 ## 기타 문의사항
 쓰시다가 버그도 아니고 개선요청도 아니지만 궁금한 것이 있으면 물어봐 주세요.
-역시 Issue 기능을 통해 올려주시면 됩니다.
-게시물을 만들 때 '문의사항' 항목 옆의 [Get started] 버튼을 누르고 기록해 주시면 됩니다.
+[문의사항](https://github.com/kr-ngii/NgiiDataOverlay/issues/new?template=question.md)
