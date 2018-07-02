@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an idea for this project
+about: 이 플러그인 개선을 위한 아이디어 제안
 
 ---
 
