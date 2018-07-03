@@ -28,14 +28,6 @@
         <string>기초자료/수정성과 비교</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="btnExport">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>변화정보내보내기</string>
-       </property>
-      </widget>
      </widget>
     </item>
     <item row="1" column="0">

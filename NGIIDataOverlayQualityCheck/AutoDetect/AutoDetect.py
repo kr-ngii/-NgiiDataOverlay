@@ -43,8 +43,7 @@ class ResSaveDialog(QDialog, ResSaveDialog_FORM_CLASS):
         self.parent = parent
         self.dlgAutoDetect = dlgAutoDetect
 
-        self.label.setText(u"변화정보 저장 Shape 파일 폴더: ")
-        self._mode = "shp"
+        self.setMode("shp")
 
         self.__connectFn()
 
@@ -53,18 +52,51 @@ class ResSaveDialog(QDialog, ResSaveDialog_FORM_CLASS):
         self.rdoShp.toggled.connect(self.on_rdoShp)
         self.rdoGpkg.toggled.connect(self.on_rdoGpkg)
         self.btnBrowse.clicked.connect(self.on_click_btnBrowse)
+        self.btnOk.clicked.connect(self.on_accepted)
+        self.btnCancel.clicked.connect(self.on_rejected)
 
-    def on_rdoShp(self, checked):
-        if checked:
+    def setMode(self, mode):
+        if mode == "shp":
             self.label.setText(u"변화정보 저장 Shape 파일 폴더: ")
             self.edtPath.setText("")
             self._mode = "shp"
-
-    def on_rdoGpkg(self, checked):
-        if checked:
+        else:
             self.label.setText(u"변화정보 저장 GeoPackage 파일: ")
             self.edtPath.setText("")
             self._mode = "gpkg"
+
+    def on_accepted(self):
+        path = self.edtPath.text()
+        if path == "":
+            msg = QMessageBox()
+            msg.setWindowTitle(u"공간정보 중첩 검사 툴")
+            msg.setIcon(QMessageBox.Information)
+            msg.setText(u"내보내기 형태와 파일 혹은 폴더를 선택하셔야 진행 가능합니다.")
+            msg.setStandardButtons(QMessageBox.Ok)
+
+            msg.exec_()
+        else:
+            self.accept()
+
+    def on_rejected(self):
+        msg = QMessageBox()
+        msg.setWindowTitle(u"공간정보 중첩 검사 툴")
+        msg.setIcon(QMessageBox.Question)
+        msg.setText(u"만약 지금 취소하시면 다시 [기초자료/수정성과 비교]를 수행하셔야 변화정보 저장파일을 만들 수 있습니다.\n"
+                    u"정말 취소하시겠습니까?")
+        msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+
+        rc = msg.exec_()
+        if rc == QMessageBox.Ok:
+            self.reject()
+
+    def on_rdoShp(self, checked):
+        if checked:
+            self.setMode("shp")
+
+    def on_rdoGpkg(self, checked):
+        if checked:
+            self.setMode("gpkg")
 
     def on_click_btnBrowse(self):
         if self._mode == "shp":
@@ -98,8 +130,12 @@ class ResSaveDialog(QDialog, ResSaveDialog_FORM_CLASS):
         crs.ImportFromEPSG(5179)
 
         # 대상 파일 만들기
-        pg = gdal.OpenEx(pgConnectInfo, gdal.OF_VECTOR, ["PostgreSQL"],
-                         ['PRECISION=NO'])
+        try:
+            pg = gdal.OpenEx(pgConnectInfo, gdal.OF_VECTOR, ["PostgreSQL"],
+                             ['PRECISION=NO'])
+        except:
+            self.parent.error(u"DB 접속데 실패하였습니다.")
+            return
 
         sql = """
         select *
@@ -109,7 +145,7 @@ class ResSaveDialog(QDialog, ResSaveDialog_FORM_CLASS):
             from qi_edit.tn_buld as edit, qi_edit.inspect_obj as auto
             where
               edit.ogc_fid = auto.receive_ogc_fid
-              and auto.layer_nm = 'tn_buld'
+              and auto.layer_nm = '{layer}'
             )
             union
             (
@@ -117,55 +153,57 @@ class ResSaveDialog(QDialog, ResSaveDialog_FORM_CLASS):
             from qi_origin.tn_buld as org, qi_edit.inspect_obj as auto
             where
               org.ogc_fid = auto.origin_ogc_fid
-              and auto.layer_nm = 'tn_buld'
+              and auto.layer_nm = '{layer}'
               and auto.mod_type = 'r'
             )
         ) as uni
-                    """
+                    """.format(layer=layerName)
         pgLayer = pg.ExecuteSQL(sql.encode("UTF8"))
 
-        # shpDs = gdal.OpenEx(shpFilePath.encode("UTF8"), gdal.OF_VECTOR, ["ESRI Shapefile"], ["SHAPE_ENCODING=UTF8", "ENCODING=UTF8", 'PRECISION=NO'])
-        # shpLayer = shpDs.CreateLayer(layerName, geom_type=ogr.wkbMultiPolygon )
+        try:
+            outDriver = ogr.GetDriverByName("ESRI Shapefile")
+            outDataSource = outDriver.CreateDataSource(shpFilePath,
+                                                       ["SHAPE_ENCODING=UTF8", "ENCODING=UTF8", 'PRECISION=NO'])
+            shpLayer = outDataSource.CreateLayer(layerName, geom_type=ogr.wkbMultiPolygon)
 
-        outDriver = ogr.GetDriverByName("ESRI Shapefile")
-        outDataSource = outDriver.CreateDataSource(shpFilePath,
-                                                   ["SHAPE_ENCODING=UTF8", "ENCODING=UTF8", 'PRECISION=NO'])
-        shpLayer = outDataSource.CreateLayer(layerName, geom_type=ogr.wkbMultiPolygon)
+            pgLayerDefn = pgLayer.GetLayerDefn()
+            for i in range(pgLayerDefn.GetFieldCount()):
+                fieldDefn = pgLayerDefn.GetFieldDefn(i)
+                shpLayer.CreateField(fieldDefn)
 
-        pgLayerDefn = pgLayer.GetLayerDefn()
-        for i in range(pgLayerDefn.GetFieldCount()):
-            fieldDefn = pgLayerDefn.GetFieldDefn(i)
-            shpLayer.CreateField(fieldDefn)
+            outLayerDefn = shpLayer.GetLayerDefn()
 
-        outLayerDefn = shpLayer.GetLayerDefn()
+            for inFeature in pgLayer:
+                # Create output Feature
+                outFeature = ogr.Feature(outLayerDefn)
 
-        for inFeature in pgLayer:
-            # Create output Feature
-            outFeature = ogr.Feature(outLayerDefn)
+                # Add field values from input Layer
+                for i in range(0, outLayerDefn.GetFieldCount()):
+                    fieldDefn = outLayerDefn.GetFieldDefn(i)
+                    fieldName = fieldDefn.GetName()
 
-            # Add field values from input Layer
-            for i in range(0, outLayerDefn.GetFieldCount()):
-                fieldDefn = outLayerDefn.GetFieldDefn(i)
-                fieldName = fieldDefn.GetName()
+                    outFeature.SetField(outLayerDefn.GetFieldDefn(i).GetNameRef(),
+                                        inFeature.GetField(i))
 
-                outFeature.SetField(outLayerDefn.GetFieldDefn(i).GetNameRef(),
-                                    inFeature.GetField(i))
+                # Set geometry as centroid
+                geom = inFeature.GetGeometryRef()
+                outFeature.SetGeometry(geom.Clone())
+                # Add new feature to output Layer
+                shpLayer.CreateFeature(outFeature)
+                outFeature = None
 
-            # Set geometry as centroid
-            geom = inFeature.GetGeometryRef()
-            outFeature.SetGeometry(geom.Clone())
-            # Add new feature to output Layer
-            shpLayer.CreateFeature(outFeature)
-            outFeature = None
+            crs.MorphToESRI()
+            file = open(os.path.join(shpDir, layerName) + '.prj', 'w')
+            file.write(crs.ExportToWkt())
+            file.close()
 
-        crs.MorphToESRI()
-        file = open(os.path.join(shpDir, layerName) + '.prj', 'w')
-        file.write(crs.ExportToWkt())
-        file.close()
-
-        file = open(os.path.join(shpDir, layerName) + '.cpg', 'w')
-        file.write("UTF8")
-        file.close()
+            # TODO: 이 코드만 넣으면 이상하게 한글이 깨진다.
+            # file = open(os.path.join(shpDir, layerName) + '.cpg', 'w')
+            # file.write("UTF-8")
+            # file.close()
+        except:
+            self.parent.error(u"내보내기 하는 파일 생성 중 오류가 발생했습니다.")
+            return
 
         self.parent.alert(u"변화정보 내보내기 완료")
 
@@ -241,7 +279,6 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
             self.lblEditFolder.setText("Folder: ")
             self.lstOriginData.clear()
             self.lstEditData.clear()
-            self.parent.btnExport.setEnabled(False)
         except:
             self.parent.error(u"Auto Detect 초기화 오류")
 
@@ -708,9 +745,6 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
             self.lblStatus.setText(u"변화내용 자동비교 완료 ")
             self.parent.info(u"변화내용 자동비교 완료 ")
 
-            self.parent.btnExport.setEnabled(True)
-            self.parent.alert(u"자동비교가 완료되었으니 [변화정보내보내기] 버튼을 눌러 납품용 파일을 만들어 주세요.")
-
         except Exception as e:
             self.lblStatus.setText(u"변화내용 자동비교 오류로 중단")
             self.parent.error(u"변화내용 자동비교 오류로 중단")
@@ -720,6 +754,15 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
             self.progressMain.setMaximum(10)
             self.progressMain.setValue(0)
 
+        self.parent.alert(u"자동비교가 완료되었으니 납품용 파일을 만들어 주세요.")
+
+        # 변화정보를 저장할 폴더나 파일 선택
+        dlg = ResSaveDialog(self.parent, self)
+        rc = dlg.exec_()
+
+        if not rc:
+            return
+        dlg.run_export()
 
     def insertData(self, schema, dataType, folder, layerList):
         if dataType == 'shp':

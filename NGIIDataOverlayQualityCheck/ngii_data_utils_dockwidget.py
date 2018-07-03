@@ -165,7 +165,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         msg = QMessageBox()
         msg.setIcon(icon)
         msg.setText(text)
-        msg.setWindowTitle(u"국토기본정보 공간정보 중첩 검사 툴")
+        msg.setWindowTitle(u"공간정보 중첩 검사 툴")
         msg.setStandardButtons(QMessageBox.Ok)
 
         msg.exec_()
@@ -177,7 +177,6 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         self.connect(self.btnLoadTms, SIGNAL("clicked()"), self._on_click_btnLoadTms)
         self.connect(self.btnLoadBaseMap, SIGNAL("clicked()"), self._on_click_btnLoadBaseMap)
         self.connect(self.btnReportError, SIGNAL("clicked()"), self._on_click_btnReportError)
-        self.connect(self.btnExport, SIGNAL("clicked()"), self._on_click_btnExport)
 
         root = QgsProject.instance().layerTreeRoot()
         root.willRemoveChildren.connect(self.onWillRemoveChildren)  # 이 이벤트는 제거되거나 이동되는 레이어를 찾을 수 있음
@@ -225,17 +224,8 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
             return
 
         self._autoDetecter.connectPg()
-        self._autoDetecter.show()
-
-    def _on_click_btnExport(self):
-        dlg = ResSaveDialog(self, self._autoDetecter)
-        rc = dlg.exec_()
-
-        if not rc:
-            return
-
-        dlg.run_export()
-
+        # self._autoDetecter.show()
+        self._autoDetecter.exec_()
 
     def _on_click_btnLoadVector(self):
         dialog = QtGui.QFileDialog(self)
@@ -784,7 +774,6 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
                         symbol = QgsLineSymbolV2().createSimple({'color': colorText})
                     # elif geomType == QGis.Polygon:
                     elif geomType == 2:
-                        # TODO: 패턴이 먹게 수정 필요
                         symbol = QgsFillSymbolV2().createSimple({'color': colorText, 'outline_color': colorText, 'name': 'x'})
                     else:
                         continue
