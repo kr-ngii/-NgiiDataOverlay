@@ -36,7 +36,7 @@ import json
 from subprocess import call
 
 # from ngii_data_utils_dockwidget_base import Ui_NgiiDataUtilsDockWidgetBase
-from AutoDetect import AutoDetect
+from AutoDetect import AutoDetect, ResSaveDialog
 from OnMap import OnMapLoader
 from Shp import ShpLoader
 from Gpkg import GpkgLoader
@@ -177,6 +177,7 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         self.connect(self.btnLoadTms, SIGNAL("clicked()"), self._on_click_btnLoadTms)
         self.connect(self.btnLoadBaseMap, SIGNAL("clicked()"), self._on_click_btnLoadBaseMap)
         self.connect(self.btnReportError, SIGNAL("clicked()"), self._on_click_btnReportError)
+        self.connect(self.btnExport, SIGNAL("clicked()"), self._on_click_btnExport)
 
         root = QgsProject.instance().layerTreeRoot()
         root.willRemoveChildren.connect(self.onWillRemoveChildren)  # 이 이벤트는 제거되거나 이동되는 레이어를 찾을 수 있음
@@ -225,6 +226,16 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
         self._autoDetecter.connectPg()
         self._autoDetecter.show()
+
+    def _on_click_btnExport(self):
+        dlg = ResSaveDialog(self, self._autoDetecter)
+        rc = dlg.exec_()
+
+        if not rc:
+            return
+
+        dlg.run_export()
+
 
     def _on_click_btnLoadVector(self):
         dialog = QtGui.QFileDialog(self)

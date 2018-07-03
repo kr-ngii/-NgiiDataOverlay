@@ -19,9 +19,7 @@ from osgeo import gdal, ogr, osr
 
 from .. calc_utils import force_gui_update
 
-# class SelectInspectData(QDialog, Ui_SelectInspectData):
 DbInfoDialog_FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'DbInfo.ui'))
-
 
 class DbInfoDialog(QDialog, DbInfoDialog_FORM_CLASS):
 
@@ -32,6 +30,144 @@ class DbInfoDialog(QDialog, DbInfoDialog_FORM_CLASS):
         super(DbInfoDialog, self).__init__(parent)
         self.setupUi(self)
         self.parent = parent
+
+
+ResSaveDialog_FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ResSave.ui'))
+
+class ResSaveDialog(QDialog, ResSaveDialog_FORM_CLASS):
+    _mode = None
+
+    def __init__(self, parent, dlgAutoDetect):
+        super(ResSaveDialog, self).__init__(parent)
+        self.setupUi(self)
+        self.parent = parent
+        self.dlgAutoDetect = dlgAutoDetect
+
+        self.label.setText(u"변화정보 저장 Shape 파일 폴더: ")
+        self._mode = "shp"
+
+        self.__connectFn()
+
+    # 이벤트 처리로 파일종류 선택에 대응
+    def __connectFn(self):
+        self.rdoShp.toggled.connect(self.on_rdoShp)
+        self.rdoGpkg.toggled.connect(self.on_rdoGpkg)
+        self.btnBrowse.clicked.connect(self.on_click_btnBrowse)
+
+    def on_rdoShp(self, checked):
+        if checked:
+            self.label.setText(u"변화정보 저장 Shape 파일 폴더: ")
+            self.edtPath.setText("")
+            self._mode = "shp"
+
+    def on_rdoGpkg(self, checked):
+        if checked:
+            self.label.setText(u"변화정보 저장 GeoPackage 파일: ")
+            self.edtPath.setText("")
+            self._mode = "gpkg"
+
+    def on_click_btnBrowse(self):
+        if self._mode == "shp":
+            dialog = QtGui.QFileDialog(self)
+            shpDir = dialog.getExistingDirectory(self, u"변화정보를 저장할 ESRI Shape 폴더 선택")
+
+            if not shpDir:
+                return
+            self.edtPath.setText(shpDir)
+
+        elif self._mode == "gpkg":
+            dialog = QtGui.QFileDialog(self)
+            gpkgFile = dialog.getSaveFileName(self, u"변화정보를 저장할 GeoPackage(GPKG) 파일 선택", None, "GeoPackage(*.gpkg)")
+
+            if not gpkgFile:
+                return
+
+            self.edtPath.setText(gpkgFile)
+
+    def run_export(self):
+        shpDir = self.edtPath.text()
+        layerName = "tn_buld"
+        shpFilePath = os.path.join(shpDir, layerName) + ".shp"
+
+        pgConnectInfo = 'PG:host={host} port={port} dbname={dbname} user={user} password={password}' \
+            .format(host=self.dlgAutoDetect.dbHost, port=self.dlgAutoDetect.dbPort, dbname=self.dlgAutoDetect.dbNm,
+                    user=self.dlgAutoDetect.dbUser, password=self.dlgAutoDetect.dbPassword)
+
+        # 좌표계 정보 생성
+        crs = osr.SpatialReference()
+        crs.ImportFromEPSG(5179)
+
+        # 대상 파일 만들기
+        pg = gdal.OpenEx(pgConnectInfo, gdal.OF_VECTOR, ["PostgreSQL"],
+                         ['PRECISION=NO'])
+
+        sql = """
+        select *
+        from (
+        (
+            select edit.*, auto.mod_type
+            from qi_edit.tn_buld as edit, qi_edit.inspect_obj as auto
+            where
+              edit.ogc_fid = auto.receive_ogc_fid
+              and auto.layer_nm = 'tn_buld'
+            )
+            union
+            (
+            select org.*, auto.mod_type
+            from qi_origin.tn_buld as org, qi_edit.inspect_obj as auto
+            where
+              org.ogc_fid = auto.origin_ogc_fid
+              and auto.layer_nm = 'tn_buld'
+              and auto.mod_type = 'r'
+            )
+        ) as uni
+                    """
+        pgLayer = pg.ExecuteSQL(sql.encode("UTF8"))
+
+        # shpDs = gdal.OpenEx(shpFilePath.encode("UTF8"), gdal.OF_VECTOR, ["ESRI Shapefile"], ["SHAPE_ENCODING=UTF8", "ENCODING=UTF8", 'PRECISION=NO'])
+        # shpLayer = shpDs.CreateLayer(layerName, geom_type=ogr.wkbMultiPolygon )
+
+        outDriver = ogr.GetDriverByName("ESRI Shapefile")
+        outDataSource = outDriver.CreateDataSource(shpFilePath,
+                                                   ["SHAPE_ENCODING=UTF8", "ENCODING=UTF8", 'PRECISION=NO'])
+        shpLayer = outDataSource.CreateLayer(layerName, geom_type=ogr.wkbMultiPolygon)
+
+        pgLayerDefn = pgLayer.GetLayerDefn()
+        for i in range(pgLayerDefn.GetFieldCount()):
+            fieldDefn = pgLayerDefn.GetFieldDefn(i)
+            shpLayer.CreateField(fieldDefn)
+
+        outLayerDefn = shpLayer.GetLayerDefn()
+
+        for inFeature in pgLayer:
+            # Create output Feature
+            outFeature = ogr.Feature(outLayerDefn)
+
+            # Add field values from input Layer
+            for i in range(0, outLayerDefn.GetFieldCount()):
+                fieldDefn = outLayerDefn.GetFieldDefn(i)
+                fieldName = fieldDefn.GetName()
+
+                outFeature.SetField(outLayerDefn.GetFieldDefn(i).GetNameRef(),
+                                    inFeature.GetField(i))
+
+            # Set geometry as centroid
+            geom = inFeature.GetGeometryRef()
+            outFeature.SetGeometry(geom.Clone())
+            # Add new feature to output Layer
+            shpLayer.CreateFeature(outFeature)
+            outFeature = None
+
+        crs.MorphToESRI()
+        file = open(os.path.join(shpDir, layerName) + '.prj', 'w')
+        file.write(crs.ExportToWkt())
+        file.close()
+
+        file = open(os.path.join(shpDir, layerName) + '.cpg', 'w')
+        file.write("UTF8")
+        file.close()
+
+        self.parent.alert(u"변화정보 내보내기 완료")
 
 
 # CLASS for multitasking
@@ -99,6 +235,18 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
     _last_opened_org_folder = None
     _last_opened_edit_folder = None
 
+    def show(self):
+        try:
+            self.lblOrgFolder.setText("Folder: ")
+            self.lblEditFolder.setText("Folder: ")
+            self.lstOriginData.clear()
+            self.lstEditData.clear()
+            self.parent.btnExport.setEnabled(False)
+        except:
+            self.parent.error(u"Auto Detect 초기화 오류")
+
+        super(AutoDetect, self).show()
+
     def __init__(self, iface, parent=None):
         super(AutoDetect, self).__init__(parent)
         self.setupUi(self)
@@ -125,8 +273,8 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
             if self.conn:
                 self.conn.close()
 
-            self.conn = psycopg2.connect(host=self.__dbHost, port=int(self.__dbPort), database=self.__dbNm,
-                                         user=self.__dbUser, password=self.__dbPassword)
+            self.conn = psycopg2.connect(host=self.dbHost, port=int(self.dbPort), database=self.dbNm,
+                                         user=self.dbUser, password=self.dbPassword)
 
         except Exception as e:
             return False
@@ -138,11 +286,11 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
         self.properties.read(self.PROPERTIES_FILE)
 
         # Database
-        self.__dbHost = self.properties.get("database", "host")
-        self.__dbPort = self.properties.get("database", "port")
-        self.__dbNm = self.properties.get("database", "dbname")
-        self.__dbUser = self.properties.get("database", "user")
-        self.__dbPassword = self.properties.get("database", "password")
+        self.dbHost = self.properties.get("database", "host")
+        self.dbPort = self.properties.get("database", "port")
+        self.dbNm = self.properties.get("database", "dbname")
+        self.dbUser = self.properties.get("database", "user")
+        self.dbPassword = self.properties.get("database", "password")
 
     def __loadSql(self):
         self.sqlStatement = ConfigParser.RawConfigParser()
@@ -557,12 +705,15 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
             self.addLayers()
 
             self.progressMain.setMaximum(10)
-            self.lblStatus.setText(u"변화내용 자동탐지 완료 ")
-            self.parent.info(u"변화내용 자동탐지 완료 ")
+            self.lblStatus.setText(u"변화내용 자동비교 완료 ")
+            self.parent.info(u"변화내용 자동비교 완료 ")
+
+            self.parent.btnExport.setEnabled(True)
+            self.parent.alert(u"자동비교가 완료되었으니 [변화정보내보내기] 버튼을 눌러 납품용 파일을 만들어 주세요.")
 
         except Exception as e:
-            self.lblStatus.setText(u"변화내용 자동탐지 오류로 중단")
-            self.parent.error(u"변화내용 자동탐지 오류로 중단")
+            self.lblStatus.setText(u"변화내용 자동비교 오류로 중단")
+            self.parent.error(u"변화내용 자동비교 오류로 중단")
             raise e
         finally:
             QgsApplication.restoreOverrideCursor()
@@ -583,16 +734,14 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
             return False
 
         pgConnectInfo = 'PG:host={host} port={port} dbname={dbname} user={user} password={password}' \
-            .format(host=self.__dbHost, port=self.__dbPort, dbname=self.__dbNm,
-                    user=self.__dbUser, password=self.__dbPassword)
+            .format(host=self.dbHost, port=self.dbPort, dbname=self.dbNm,
+                    user=self.dbUser, password=self.dbPassword)
 
         # 좌표계 정보 생성
         crs = osr.SpatialReference()
         crs.ImportFromEPSG(5179)
 
         # 대상 파일 만들기
-        # pgDriver = ogr.GetDriverByName("PostgreSQL")
-        # pg = pgDriver.CreateDataSource(pgConnectInfo)
         pg = gdal.OpenEx(pgConnectInfo, gdal.OF_VECTOR, ["PostgreSQL"], ["SCHEMA={}".format(schema), 'PRECISION=NO'])
 
         self.progressMain.setMaximum(len(layerList))
@@ -658,8 +807,8 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
             return
 
         pgConnectInfo = 'PG:host={host} port={port} dbname={dbname} user={user} password={password}' \
-            .format(host=self.__dbHost, port=self.__dbPort, dbname=self.__dbNm,
-                    user=self.__dbUser, password=self.__dbPassword)
+            .format(host=self.dbHost, port=self.dbPort, dbname=self.dbNm,
+                    user=self.dbUser, password=self.dbPassword)
 
         # 좌표계 정보 생성
         crs = osr.SpatialReference()
@@ -724,7 +873,7 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
 
         try:
             selectSql = self.sqlStatement.get("SQL", "selectSchemaList")
-            cur.execute(SQL(selectSql), {"user": self.__dbUser})
+            cur.execute(SQL(selectSql), {"user": self.dbUser})
 
             sqlResults = cur.fetchall()
 
@@ -881,6 +1030,20 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
         self.column_sql = ','.join(all_column_nm)
 
         self.id_column = all_column_nm[0]
+
+    #########
+    """
+    분류코드, 분류코드명, No, 코드ID, 코드명
+    OCS_CODE, 객체변동구분, 1, OCS001, 추가
+        , 객체변동구분, 2, OCS002, 삭제
+        , 객체변동구분, 3, OCS003, 형상수정
+        , 객체변동구분, 4, OCS004, 속성수정
+        , 객체변동구분, 5, OCS005, 형상/속성수정
+    """
+    """
+    mod_type
+    a, r, s, eg, ef
+    """
 
     # 변화 탐지 SQL
     # 변화 정보 테이블
@@ -1363,7 +1526,7 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
                                                 edit_schema=self.EDIT_SCHEMA,
                                                 table=table)
 
-            uri.setConnection(self.__dbHost, self.__dbPort, self.__dbNm, self.__dbUser, self.__dbPassword)
+            uri.setConnection(self.dbHost, self.dbPort, self.dbNm, self.dbUser, self.dbPassword)
             uri.setDataSource("", sql, "wkb_geometry", "", "id")
             self.maintain_data = QgsVectorLayer(uri.uri(), u'변화없음_' + table, "postgres")
 

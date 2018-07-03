@@ -1,1 +1,1 @@
-from AutoDetect import AutoDetect
+from AutoDetect import AutoDetect, ResSaveDialog
