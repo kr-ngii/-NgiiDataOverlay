@@ -19,6 +19,57 @@ from osgeo import gdal, ogr, osr
 
 from .. calc_utils import force_gui_update
 
+###############################
+### OS 커멘드를 백그라운드로 실행하는 클래스
+class CmdThread(threading.Thread):
+    def __init__(self, commandList):
+        self.commandList = commandList
+        threading.Thread.__init__(self)
+
+    def run(self):
+        if platform.system() == 'Windows':
+            subprocess.check_call(self.commandList, creationflags=0x08000000)
+        else:
+            subprocess.check_call(self.commandList, stderr=subprocess.STDOUT)
+        return
+
+def threadExecuteCmd(commandList):
+    trd = CmdThread(commandList)
+    trd.start()
+
+    while threading.activeCount() > 1:
+        QgsApplication.processEvents(QEventLoop.ExcludeUserInputEvents)
+        time.sleep(0.1)
+
+
+#######################
+### 시간이 오래 걸리는 쿼리를 쓰레드로 돌리는 크래스
+class DBThread(threading.Thread):
+    def __init__(self, cursor, query, param):
+        self.cursor = cursor
+        self.query = query
+        self.param = param
+        threading.Thread.__init__(self)
+
+    def run(self):
+        if self.param is None:
+            self.cursor.execute(self.query)
+        else:
+            self.cursor.execute(self.query, self.param)
+
+        return
+
+def threadExecuteSql(cursor, sql, param=None):
+    dbt = DBThread(cursor, sql, param)
+    dbt.start()
+
+    while threading.activeCount() > 1:
+        QgsApplication.processEvents(QEventLoop.ExcludeUserInputEvents)
+        time.sleep(0.1)
+
+
+#######################
+### DB 접속정보를 입력받는 UI
 DbInfoDialog_FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'DbInfo.ui'))
 
 class DbInfoDialog(QDialog, DbInfoDialog_FORM_CLASS):
@@ -32,6 +83,8 @@ class DbInfoDialog(QDialog, DbInfoDialog_FORM_CLASS):
         self.parent = parent
 
 
+#######################
+### 자동탐지 결과를 저장할 경로 받는 UI
 ResSaveDialog_FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ResSave.ui'))
 
 class ResSaveDialog(QDialog, ResSaveDialog_FORM_CLASS):
@@ -117,10 +170,6 @@ class ResSaveDialog(QDialog, ResSaveDialog_FORM_CLASS):
             self.edtPath.setText(gpkgFile)
 
     def run_export(self):
-        shpDir = self.edtPath.text()
-        layerName = "tn_buld"
-        shpFilePath = os.path.join(shpDir, layerName) + ".shp"
-
         pgConnectInfo = 'PG:host={host} port={port} dbname={dbname} user={user} password={password}' \
             .format(host=self.dlgAutoDetect.dbHost, port=self.dlgAutoDetect.dbPort, dbname=self.dlgAutoDetect.dbNm,
                     user=self.dlgAutoDetect.dbUser, password=self.dlgAutoDetect.dbPassword)
@@ -129,7 +178,7 @@ class ResSaveDialog(QDialog, ResSaveDialog_FORM_CLASS):
         crs = osr.SpatialReference()
         crs.ImportFromEPSG(5179)
 
-        # 대상 파일 만들기
+        # DB 접속
         try:
             pg = gdal.OpenEx(pgConnectInfo, gdal.OF_VECTOR, ["PostgreSQL"],
                              ['PRECISION=NO'])
@@ -137,127 +186,111 @@ class ResSaveDialog(QDialog, ResSaveDialog_FORM_CLASS):
             self.parent.error(u"DB 접속데 실패하였습니다.")
             return
 
-        sql = """
-        select *
-        from (
-        (
-            select edit.*, auto.mod_type
-            from qi_edit.tn_buld as edit, qi_edit.inspect_obj as auto
-            where
-              edit.ogc_fid = auto.receive_ogc_fid
-              and auto.layer_nm = '{layer}'
-            )
-            union
-            (
-            select org.*, auto.mod_type
-            from qi_origin.tn_buld as org, qi_edit.inspect_obj as auto
-            where
-              org.ogc_fid = auto.origin_ogc_fid
-              and auto.layer_nm = '{layer}'
-              and auto.mod_type = 'r'
-            )
-        ) as uni
-                    """.format(layer=layerName)
-        pgLayer = pg.ExecuteSQL(sql.encode("UTF8"))
+        shpDir = self.edtPath.text()
+
+        layerList = [self.dlgAutoDetect.lstOriginData.item(i).text() for i in range(self.dlgAutoDetect.lstOriginData.count())]
 
         try:
-            outDriver = ogr.GetDriverByName("ESRI Shapefile")
-            outDataSource = outDriver.CreateDataSource(shpFilePath,
-                                                       ["SHAPE_ENCODING=UTF8", "ENCODING=UTF8", 'PRECISION=NO'])
-            shpLayer = outDataSource.CreateLayer(layerName, geom_type=ogr.wkbMultiPolygon)
+            QgsApplication.setOverrideCursor(Qt.WaitCursor)
+            self.parent.info(u"변화정보 납품파일 생성 시작")
+            self.parent.lblStatus.setText(u"변화정보 납품파일 생성 중...")
+            self.parent.prgMain.setMaximum(0)
 
-            pgLayerDefn = pgLayer.GetLayerDefn()
-            for i in range(pgLayerDefn.GetFieldCount()):
-                fieldDefn = pgLayerDefn.GetFieldDefn(i)
-                shpLayer.CreateField(fieldDefn)
+            self.parent.prgSub.setMaximum(len(layerList))
+            i = 0
+            for layerName in layerList:
+                i += 1
+                self.parent.prgSub.setValue(i)
+                force_gui_update()
 
-            outLayerDefn = shpLayer.GetLayerDefn()
+                shpFilePath = os.path.join(shpDir, layerName) + ".shp"
 
-            for inFeature in pgLayer:
-                # Create output Feature
-                outFeature = ogr.Feature(outLayerDefn)
+                sql = u"""
+                select *
+                from (
+                (
+                    select edit.*, auto.mod_type
+                    from qi_edit.{layer} as edit, qi_edit.inspect_obj as auto
+                    where
+                      edit.ogc_fid = auto.receive_ogc_fid
+                      and auto.layer_nm = '{layer}'
+                    )
+                    union
+                    (
+                    select org.*, auto.mod_type
+                    from qi_origin.{layer} as org, qi_edit.inspect_obj as auto
+                    where
+                      org.ogc_fid = auto.origin_ogc_fid
+                      and auto.layer_nm = '{layer}'
+                      and auto.mod_type = 'r'
+                    )
+                ) as uni
+                            """.format(layer=layerName)
+                pgLayer = pg.ExecuteSQL(sql.encode("UTF8"))
 
-                # Add field values from input Layer
-                for i in range(0, outLayerDefn.GetFieldCount()):
-                    fieldDefn = outLayerDefn.GetFieldDefn(i)
-                    fieldName = fieldDefn.GetName()
+                try:
+                    outDriver = ogr.GetDriverByName("ESRI Shapefile")
+                    outDataSource = outDriver.CreateDataSource(shpFilePath,
+                                                               ["SHAPE_ENCODING=UTF8", "ENCODING=UTF8", 'PRECISION=NO'])
 
-                    outFeature.SetField(outLayerDefn.GetFieldDefn(i).GetNameRef(),
-                                        inFeature.GetField(i))
+                    # 객체 타입별로 분리
+                    geomType = pgLayer.GetGeomType()
+                    shpLayer = outDataSource.CreateLayer(layerName.encode("UTF8"), geom_type=geomType)
 
-                # Set geometry as centroid
-                geom = inFeature.GetGeometryRef()
-                outFeature.SetGeometry(geom.Clone())
-                # Add new feature to output Layer
-                shpLayer.CreateFeature(outFeature)
-                outFeature = None
+                    pgLayerDefn = pgLayer.GetLayerDefn()
+                    for i in range(pgLayerDefn.GetFieldCount()):
+                        fieldDefn = pgLayerDefn.GetFieldDefn(i)
+                        shpLayer.CreateField(fieldDefn)
 
-            crs.MorphToESRI()
-            file = open(os.path.join(shpDir, layerName) + '.prj', 'w')
-            file.write(crs.ExportToWkt())
-            file.close()
+                    outLayerDefn = shpLayer.GetLayerDefn()
 
-            # TODO: 이 코드만 넣으면 이상하게 한글이 깨진다.
-            # file = open(os.path.join(shpDir, layerName) + '.cpg', 'w')
-            # file.write("UTF-8")
-            # file.close()
-        except:
-            self.parent.error(u"내보내기 하는 파일 생성 중 오류가 발생했습니다.")
-            return
+                    for inFeature in pgLayer:
+                        # Create output Feature
+                        outFeature = ogr.Feature(outLayerDefn)
 
-        self.parent.alert(u"변화정보 내보내기 완료")
+                        # Add field values from input Layer
+                        for i in range(0, outLayerDefn.GetFieldCount()):
+                            fieldDefn = outLayerDefn.GetFieldDefn(i)
+                            fieldName = fieldDefn.GetName()
 
+                            outFeature.SetField(outLayerDefn.GetFieldDefn(i).GetNameRef(),
+                                                inFeature.GetField(i))
 
-# CLASS for multitasking
-class CmdThread(threading.Thread):
-    def __init__(self, commandList):
-        self.commandList = commandList
-        threading.Thread.__init__(self)
+                        # Set geometry as centroid
+                        geom = inFeature.GetGeometryRef()
+                        outFeature.SetGeometry(geom.Clone())
+                        # Add new feature to output Layer
+                        shpLayer.CreateFeature(outFeature)
+                        outFeature = None
 
-    def run(self):
-        if platform.system() == 'Windows':
-            subprocess.check_call(self.commandList, creationflags=0x08000000)
-        else:
-            subprocess.check_call(self.commandList, stderr=subprocess.STDOUT)
-        return
+                    crs.MorphToESRI()
+                    file = open(os.path.join(shpDir, layerName) + '.prj', 'w')
+                    file.write(crs.ExportToWkt())
+                    file.close()
 
+                    # TODO: 이 코드만 넣으면 이상하게 한글이 깨진다.
+                    # file = open(os.path.join(shpDir, layerName) + '.cpg', 'w')
+                    # file.write("UTF-8")
+                    # file.close()
+                except Exception as e:
+                    self.parent.error(u"내보내기 하는 파일 생성 중 오류가 발생했습니다.")
+                    continue
+                    # raise e
+        except Exception as e:
+            raise e
+        finally:
+            QgsApplication.restoreOverrideCursor()
 
-def threadExecuteCmd(commandList):
-    trd = CmdThread(commandList)
-    trd.start()
-
-    while threading.activeCount() > 1:
-        QgsApplication.processEvents(QEventLoop.ExcludeUserInputEvents)
-        time.sleep(0.1)
-
-
-class DBThread(threading.Thread):
-    def __init__(self, cursor, query, param):
-        self.cursor = cursor
-        self.query = query
-        self.param = param
-        threading.Thread.__init__(self)
-
-    def run(self):
-        if self.param is None:
-            self.cursor.execute(self.query)
-        else:
-            self.cursor.execute(self.query, self.param)
-
-        return
+            self.parent.info(u"변화정보 납품파일 생성 완료")
+            self.parent.lblStatus.setText(u"")
+            self.parent.prgSub.setValue(0)
+            self.parent.prgMain.setMaximum(100)
+            self.parent.alert(u"변화정보 내보내기 완료")
 
 
-def threadExecuteSql(cursor, sql, param=None):
-    dbt = DBThread(cursor, sql, param)
-    dbt.start()
-
-    while threading.activeCount() > 1:
-        QgsApplication.processEvents(QEventLoop.ExcludeUserInputEvents)
-        time.sleep(0.1)
-
-
+#############################
+### 변화 자동탐지 UI
 AutoDetect_FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'AutoDetect.ui'))
-
 
 class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
 
