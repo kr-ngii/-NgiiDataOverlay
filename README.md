@@ -32,3 +32,10 @@
 
 [문의사항](https://github.com/kr-ngii/NgiiDataOverlay/issues/new?template=question.md)
 
+## 라이선스
+ * 이 프로그램은 오픈소스 표준 라이선스인 [GPL2](LICENSE)를 따릅니다.
+ * 이 프로그램에는 다음 QGIS 플러그인 및 파이썬 라이브러리가 포함되어 있습니다.
+   - Dockable MirrorMap plugin: https://plugins.qgis.org/plugins/DockableMirrorMap/
+   - OpenLayers plugin: https://plugins.qgis.org/plugins/openlayers_plugin/
+   - TMS for Korea plugin: https://plugins.qgis.org/plugins/tmsforkorea/
+   - PyPDF2: https://pythonhosted.org/PyPDF2/
