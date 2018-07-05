@@ -39,7 +39,8 @@
 
  * NGII 저장소가 추가되며 저장소에서 정보를 다시 불러온다.
  * 저장소 정보를 불러오는 중 오류가 발생하면 [모든 저장소 다시 불러오기] 버튼을 누른다.
- 국토지리정보원 공간정보 중첩 검사 툴은 QGIS 플러그인으로 만들어져 있어 QGIS가 설치되어 있고 ‘국토지리정보원 QGIS 플러그인 저장소’가 QGIS 플러그인 관리자에 등록되어 있다면 인터넷을 통해 손쉽게 설치 가능하다. QGIS 설치와 국토지리정보원 QGIS 플러그인 저장소 등록 방법은 사용자 지침서의 해당 장을 참고하시면 된다. 이 기능은 QGIS 외에도 PostgreSQL과 PostGIS를 필요로 하는데, 이 설치는 사용자 지침서의 해당 장을 참조하면 된다.
+ * 국토지리정보원 공간정보 중첩 검사 툴은 QGIS 플러그인으로 만들어져 있어 QGIS가 설치되어 있고 ‘국토지리정보원 QGIS 플러그인 저장소’가 QGIS 플러그인 관리자에 등록되어 있다면 인터넷을 통해 손쉽게 설치 가능하다.
+ * [기초자료/수정성과 비교] 기능을 사용할 때는 QGIS 외에도 PostgreSQL과 PostGIS를 필요로 한다. 아래의 해당 항목을 참고해 설치하면 된다.
 
 ## 공간정보 중첩 검사 플러그인 설치
 ![플러그인 관리자에서 공간정보 중첩 검사 툴 설치](images/8_02.png)
@@ -57,7 +58,8 @@
 
 ### PostgreSQL 암호 입력
 ![PostgreSQL 암호 입력](images/1_02.png)
- * [주의] PostgreSQL 설치중 관리자 계정인 postgres 계정의 아이디를 정하고 기억해야한다. 보통 postgres라는 계정과 동일한 암호를 사용한다.- 권장 : postgres
+ * <span style="color:red">[주의] PostgreSQL 설치중 관리자 계정인 postgres 계정의 아이디를 정하고 기억해야한다.</span> 보통 postgres라는 계정과 동일한 암호를 사용한다.
+   - 권장 : postgres
 
 ## PostGIS 설치
 ### PostGIS 설치 초기 화면
@@ -68,4 +70,5 @@
 
 ### PostGIS 암호 입력
 ![PostGIS 암호 입력](images/1_04.png)
- * PostgreSQL 설치 시 지정했던 postgres 계정의 암호를 입력한다.- 권장 : postgres
+ * PostgreSQL 설치 시 지정했던 postgres 계정의 암호를 입력한다.
+   - 권장 : postgres
