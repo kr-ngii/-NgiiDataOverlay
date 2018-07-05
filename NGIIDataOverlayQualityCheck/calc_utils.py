@@ -176,3 +176,51 @@ def mapNoToMapBox(mapNo):
     pntTR = (maxLon, maxLat)
 
     return pntLL, pntLR, pntTL, pntTR, scale
+
+
+#######
+# 한글 인코딩 자동 판단
+from dbfread import DBF
+
+hangul_re = re.compile(ur"[ㄱ-ㅣ가-힣]")
+
+
+def is_hangul(text):
+    return hangul_re.search(text) is not None
+
+
+def testEncoding(dbfFilePath, encoding, numTestRow=100):
+    dbf = DBF(dbfFilePath, raw=True, load=True)
+    fieldNames = dbf.field_names
+
+    try:
+        encoding = encoding
+
+        i = 0
+        flagHangulFound = False
+
+        for record in dbf:
+            for fieldName in fieldNames:
+                val = record[fieldName].decode(encoding)
+                if not flagHangulFound:
+                    flagHangulFound = is_hangul(val)
+
+            i += 1
+            if i >= numTestRow and flagHangulFound:
+                break
+    except UnicodeDecodeError:
+        return False
+
+    return True
+
+
+def findEncoding(dbfFilePath):
+    encodingList = ['cp949', 'utf8', 'euc-kr']
+
+    for encoding in encodingList:
+        if testEncoding(dbfFilePath, encoding):
+            return encoding
+
+    return "Unknown"
+
+print findEncoding(r'C:\Temp\tn_buld_cp949.dbf')

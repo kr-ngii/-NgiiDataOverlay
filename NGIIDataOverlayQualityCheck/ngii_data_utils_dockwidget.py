@@ -33,7 +33,8 @@ import tempfile
 import urllib2
 from PIL import Image
 import json
-from subprocess import call
+from Image import ImageLoader
+import socket
 
 # from ngii_data_utils_dockwidget_base import Ui_NgiiDataUtilsDockWidgetBase
 from AutoDetect import AutoDetect, ResSaveDialog
@@ -41,8 +42,7 @@ from OnMap import OnMapLoader
 from Shp import ShpLoader
 from Gpkg import GpkgLoader
 from Dxf import DxfLoader
-from Image import ImageLoader
-import socket
+from dbfread import DBF
 
 import TmsForKorea
 from TmsForKorea import *
@@ -86,7 +86,8 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
     iGroupBox = 0
     groupBoxList = None
 
-    displayDebug = False
+    # displayDebug = False
+    displayDebug = True
     displayInfo = True
     displayComment = True
     displayError = True
@@ -177,10 +178,16 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         self.connect(self.btnLoadTms, SIGNAL("clicked()"), self._on_click_btnLoadTms)
         self.connect(self.btnLoadBaseMap, SIGNAL("clicked()"), self._on_click_btnLoadBaseMap)
         self.connect(self.btnReportError, SIGNAL("clicked()"), self._on_click_btnReportError)
+        self.connect(self.btnMakeReport, SIGNAL("clicked()"), self._encoding_test)
 
         root = QgsProject.instance().layerTreeRoot()
         root.willRemoveChildren.connect(self.onWillRemoveChildren)  # 이 이벤트는 제거되거나 이동되는 레이어를 찾을 수 있음
         root.removedChildren.connect(self.onRemovedChildren)  # 이 이벤트는 제거된 후에 남은 레이어를 찾을 수 있음
+
+    def _encoding_test(self):
+        for record in DBF(r'C:\_Dev\NgiiDataUtilsPlugin\NGIIDataOverlayQualityCheck\testScript\tn_buld_cp949.dbf',
+                          encoding='cp949', raw=True):
+            self.debug(record)
 
     def onWillRemoveChildren(self, node, indexFrom, indexTo):
         self.debug("[Will] indexFrom: {}, indexTo:{}".format(indexFrom, indexTo))
