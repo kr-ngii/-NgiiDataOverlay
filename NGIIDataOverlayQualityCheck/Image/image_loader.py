@@ -55,21 +55,27 @@ class ImageLoader():
         settings = QSettings()
         # Take the "CRS for new layers" config, overwrite it while loading layers and...
         oldProjValue = settings.value("/Projections/defaultBehaviour", "prompt", type=str)
+        defaultProjectCrs = settings.value("/Projections/projectDefaultCrs", "", type=str)
         settings.setValue("/Projections/defaultBehaviour", "useProject")
 
         try:
             filename, ext = os.path.splitext(os.path.basename(filePath))
             self.progText(u"{}{} 파일 읽는 중".format(filename, ext))
 
-            rlayer = QgsRasterLayer(filePath, filename)
-            rlayer.setCrs(QgsCoordinateReferenceSystem(crsID, QgsCoordinateReferenceSystem.EpsgCrsId))
-            if not rlayer.isValid():
+            rLayer = QgsRasterLayer(filePath, filename)
+
+            # 좌표계가 원본에 있었는지 확인
+            crs = rLayer.crs()
+            if crs.authid() == defaultProjectCrs:
+                rLayer.setCrs(QgsCoordinateReferenceSystem(crsID, QgsCoordinateReferenceSystem.EpsgCrsId))
+
+            if not rLayer.isValid():
                 raise Exception(u"Layer failed to load!")
 
             settings.setValue("/Projections/defaultBehaviour", oldProjValue)
 
-            QgsMapLayerRegistry.instance().addMapLayer(rlayer, False)
-            layerTreeGroup.insertChildNode(1, QgsLayerTreeLayer(rlayer))
+            QgsMapLayerRegistry.instance().addMapLayer(rLayer, False)
+            layerTreeGroup.insertChildNode(1, QgsLayerTreeLayer(rLayer))
         except Exception as e:
             raise e
         finally:
