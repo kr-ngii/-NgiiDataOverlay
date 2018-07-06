@@ -78,15 +78,26 @@ def findConner(points):
 
     return pntLL, pntLR, pntTL, pntTR
 
-
+# (B010)수치지도_36710002_2018_00000238632981.dxf
+# (B090)온맵_36710002.pdf
 mapNo_re = re.compile(ur"(?i)([ㄱ-ㅣ가-힣]+)\_(\d+)\_*(.*)")
+# (B060)정사영상_2017_36706091s.tif
+mapNoImg_re = re.compile(ur"(?i)([ㄱ-ㅣ가-힣]+)\_(\d+)\_(\d+)(s*)")
 
-def findMapNo(fileBase):
-    res = mapNo_re.search(fileBase)
-    if res:
-        return res.group(2)
+def findMapNo(fileBase, flagImage=False):
+    if not flagImage:
+        res = mapNo_re.search(fileBase)
+        if res:
+            return res.group(2)
+        else:
+            return None
     else:
-        return None
+        res = mapNoImg_re.search(fileBase)
+        if res:
+            return res.group(3)
+        else:
+            return None
+
 
 
 def mapNoToMapBox(mapNo):

@@ -51,22 +51,16 @@ class DxfLoader():
         self.parent.appendGroupBox(layerTreeGroup, "dxf")
 
     def importDxf(self, filePath, layerTreeGroup):
-        self.parent.debug("1")
         fileBase, extension = os.path.splitext(os.path.basename(filePath))
 
         # 좌표계 판단
-        self.parent.debug("2")
         mapNo = findMapNo(fileBase)
         if mapNo is None:
             crsID = 5179
         else:
             crsID = mapNoToCrs(mapNo)
 
-        self.parent.debug("3")
-        self.parent.info(u"CRS = {}".format(crsID))
-
         # 좌표계 정보 생성
-        self.parent.debug("4")
         crs = osr.SpatialReference()
         crs.ImportFromEPSG(crsID)
         self.crsWkt = crs.ExportToWkt()

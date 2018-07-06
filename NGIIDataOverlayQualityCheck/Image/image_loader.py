@@ -3,6 +3,7 @@
 import os
 from qgis.core import *
 from PyQt4.QtCore import Qt, QSettings
+from .. calc_utils import findMapNo, mapNoToCrs
 
 #########################
 # MAIN CLASS
@@ -38,10 +39,18 @@ class ImageLoader():
         self.parent.appendGroupBox(layerTreeGroup, ext.lstrip("."))
 
     def importImg(self, filePath, layerTreeGroup):
-        # TODO: 파일명에서 좌표계를 찾아라!
+        fileBase, extension = os.path.splitext(os.path.basename(filePath))
+
+        # 좌표계 판단
+        mapNo = findMapNo(fileBase, flagImage=True)
+        if mapNo is None:
+            crsID = 5179
+        else:
+            crsID = mapNoToCrs(mapNo)
+
         QgsApplication.setOverrideCursor(Qt.WaitCursor)
 
-        # 좌표계 안물어보게 하기
+        # 좌표계 정보 누락시 QGIS가 띄우는 창 막기
         # https://gis.stackexchange.com/questions/80025/accessing-qgis-program-settings-programmatically
         settings = QSettings()
         # Take the "CRS for new layers" config, overwrite it while loading layers and...
@@ -53,7 +62,7 @@ class ImageLoader():
             self.progText(u"{}{} 파일 읽는 중".format(filename, ext))
 
             rlayer = QgsRasterLayer(filePath, filename)
-            rlayer.setCrs(QgsCoordinateReferenceSystem(5186, QgsCoordinateReferenceSystem.EpsgCrsId))
+            rlayer.setCrs(QgsCoordinateReferenceSystem(crsID, QgsCoordinateReferenceSystem.EpsgCrsId))
             if not rlayer.isValid():
                 raise Exception(u"Layer failed to load!")
 
