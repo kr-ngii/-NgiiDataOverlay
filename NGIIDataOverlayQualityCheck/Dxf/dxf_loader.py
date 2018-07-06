@@ -4,7 +4,7 @@ import os
 from PyQt4.QtCore import *
 from qgis.core import *
 from osgeo import ogr, osr
-from .. calc_utils import force_gui_update
+from .. calc_utils import force_gui_update, findMapNo, mapNoToCrs
 
 ogr.UseExceptions()
 
@@ -51,14 +51,28 @@ class DxfLoader():
         self.parent.appendGroupBox(layerTreeGroup, "dxf")
 
     def importDxf(self, filePath, layerTreeGroup):
-        # TODO: 파일명에서 좌표계를 찾아라!
+        self.parent.debug("1")
+        fileBase, extension = os.path.splitext(os.path.basename(filePath))
+
+        # 좌표계 판단
+        self.parent.debug("2")
+        mapNo = findMapNo(fileBase)
+        if mapNo is None:
+            crsID = 5179
+        else:
+            crsID = mapNoToCrs(mapNo)
+
+        self.parent.debug("3")
+        self.parent.info(u"CRS = {}".format(crsID))
+
         # 좌표계 정보 생성
+        self.parent.debug("4")
         crs = osr.SpatialReference()
-        crs.ImportFromEPSG(5186)
+        crs.ImportFromEPSG(crsID)
         self.crsWkt = crs.ExportToWkt()
 
         QgsApplication.setOverrideCursor(Qt.WaitCursor)
-        # 좌표계 안물어보게 하기
+        # 좌표계 정보 누락시 QGIS가 띄우는 창 막기
         # https://gis.stackexchange.com/questions/80025/accessing-qgis-program-settings-programmatically
         settings = QSettings()
         # Take the "CRS for new layers" config, overwrite it while loading layers and...
@@ -72,7 +86,7 @@ class DxfLoader():
 
             dxfLayer = QgsVectorLayer(filePath, None, "ogr")
             crs = dxfLayer.crs()
-            crs.createFromId(5186)
+            crs.createFromId(crsID)
             dxfLayer.setCrs(crs)
 
             if not dxfLayer:

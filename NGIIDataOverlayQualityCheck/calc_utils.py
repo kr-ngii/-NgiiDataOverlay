@@ -79,10 +79,12 @@ def findConner(points):
     return pntLL, pntLR, pntTL, pntTR
 
 
+mapNo_re = re.compile(ur"(?i)([ㄱ-ㅣ가-힣]+)\_(\d+)\_*(.*)")
+
 def findMapNo(fileBase):
-    res = re.search("(?i).*_(.*)\.pdf$", fileBase)
+    res = mapNo_re.search(fileBase)
     if res:
-        return res.group(1)
+        return res.group(2)
     else:
         return None
 
@@ -176,6 +178,22 @@ def mapNoToMapBox(mapNo):
     pntTR = (maxLon, maxLat)
 
     return pntLL, pntLR, pntTL, pntTR, scale
+
+
+def mapNoToCrs(mapNo):
+    pntLL, pntLR, pntTL, pntTR, scale = mapNoToMapBox(mapNo)
+
+    # 좌표계 판단
+    if pntLL[0] < 126.0:
+        crsId = 5185
+    elif pntLL[0] < 128.0:
+        crsId = 5186
+    elif pntLL[0] < 130.0:
+        crsId = 5187
+    else:
+        crsId = 5188
+
+    return crsId
 
 
 #######
