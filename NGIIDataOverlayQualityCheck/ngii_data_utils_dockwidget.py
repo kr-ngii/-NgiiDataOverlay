@@ -86,8 +86,8 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
     iGroupBox = 0
     groupBoxList = None
 
-    # displayDebug = False
-    displayDebug = True
+    displayDebug = False
+    # displayDebug = True
     displayInfo = True
     displayComment = True
     displayError = True

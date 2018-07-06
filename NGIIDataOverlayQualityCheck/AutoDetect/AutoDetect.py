@@ -17,7 +17,7 @@ from PyQt4 import QtGui, uic
 from qgis.core import *
 from osgeo import gdal, ogr, osr
 
-from .. calc_utils import force_gui_update
+from .. calc_utils import force_gui_update, findEncoding
 
 ###############################
 ### OS 커멘드를 백그라운드로 실행하는 클래스
@@ -233,9 +233,13 @@ class ResSaveDialog(QDialog, ResSaveDialog_FORM_CLASS):
                     outDataSource = outDriver.CreateDataSource(shpFilePath,
                                                                ["SHAPE_ENCODING=UTF8", "ENCODING=UTF8", 'PRECISION=NO'])
 
-                    # 객체 타입별로 분리
+                    # 객체 타입 설정
                     geomType = pgLayer.GetGeomType()
                     shpLayer = outDataSource.CreateLayer(layerName.encode("UTF8"), geom_type=geomType)
+
+                    # 인코딩 설정
+                    # shpLayer.setProviderEncoding("UTF8")
+                    # shpLayer.dataProvider().setEncoding("UTF8")
 
                     pgLayerDefn = pgLayer.GetLayerDefn()
                     for i in range(pgLayerDefn.GetFieldCount()):
@@ -263,12 +267,14 @@ class ResSaveDialog(QDialog, ResSaveDialog_FORM_CLASS):
                         shpLayer.CreateFeature(outFeature)
                         outFeature = None
 
+                    shpLayer = None
+
                     crs.MorphToESRI()
                     file = open(os.path.join(shpDir, layerName) + '.prj', 'w')
                     file.write(crs.ExportToWkt())
                     file.close()
 
-                    # TODO: 이 코드만 넣으면 이상하게 한글이 깨진다.
+                    # 이 코드만 넣으면 이상하게 한글이 깨진다.
                     # file = open(os.path.join(shpDir, layerName) + '.cpg', 'w')
                     # file.write("UTF-8")
                     # file.close()
@@ -829,13 +835,17 @@ class AutoDetect(QDialog, AutoDetect_FORM_CLASS):
             force_gui_update()
 
             if platform.system() == 'Windows':
-                shpLayer = os.path.join(folder.replace("/", "\\"), layerName) + '.shp'
+                shpPath = os.path.join(folder.replace("/", "\\"), layerName) + '.shp'
             else:
-                shpLayer = os.path.join(folder, layerName) + '.shp'
+                shpPath = os.path.join(folder, layerName) + '.shp'
 
+            # 한글 코드 판단
+            dbfFilePath = os.path.join(folder, layerName) + ".dbf"
+            encoding = findEncoding(dbfFilePath)
 
-            # TODO: 인코딩 자동설정
-            shp = gdal.OpenEx(shpLayer, gdal.OF_VECTOR, ["ESRI Shapefile"], ["SHAPE_ENCODING=UTF8", "ENCODING=UTF8", 'PRECISION=NO'])
+            # Shape 레이어 읽기
+            shp = gdal.OpenEx(shpPath, gdal.OF_VECTOR, ["ESRI Shapefile"],
+                              ["SHAPE_ENCODING={}".format(encoding), "ENCODING={}".format(encoding), 'PRECISION=NO'])
             shpLayer = shp.GetLayer()
 
             # 원본 레이어 정보 얻기

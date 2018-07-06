@@ -4,7 +4,7 @@ import os
 from qgis.core import *
 from osgeo import ogr
 from PyQt4.QtCore import Qt, QSettings
-from .. calc_utils import force_gui_update, findEncoding, findMapNo, mapNoToCrs
+from .. calc_utils import force_gui_update, findEncoding
 
 ogr.UseExceptions()
 

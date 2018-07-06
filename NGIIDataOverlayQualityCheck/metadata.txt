@@ -10,11 +10,11 @@
 name=NGII Data Overlay Quality Check
 qgisMinimumVersion=2.14
 description=국토지리정보원 공간정보 중첩 검사 툴
-version=0.93
+version=0.94
 author=국토지리정보원 지리정보과
 email=ngii.spt@gmail.com
 
-about=국토지리정보원에서 제공하는 공간정보들을 쉽게 불려 중첩해 볼 수 있도록 지원하는 툴입니다. 온맵, 국가인터넷지도, 지형도, 정사영상 등의 자료를 올바른 공간적 위치로 손쉽게 불러올 수 있습니다. 이런 자료들을 중첩, 창분할, 그룹별 투명도 변경, 그룹별 색상변경을 통해 비교할 수 있습니다. 또한 차이점에 대해 화면 캡처와 함께 기록할 수 있습니다.
+about=국토지리정보원에서 제공하는 공간정보들을 쉽게 불러 중첩해 볼 수 있도록 지원하는 툴입니다. 온맵, 국가인터넷지도, 지형도, 정사영상 등의 자료를 올바른 공간적 위치로 손쉽게 불러올 수 있습니다. 이런 자료들을 중첩, 창분할, 그룹별 투명도 변경, 그룹별 색상변경을 통해 비교할 수 있습니다. 또한 차이점에 대해 화면 캡처와 함께 기록할 수 있습니다.
 
 tracker=https://github.com/kr-ngii/NgiiDataOverlay/issues
 repository=https://github.com/kr-ngii/NgiiDataOverlay
