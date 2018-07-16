@@ -251,5 +251,3 @@ def findEncoding(dbfFilePath):
             return encoding
 
     return "Unknown"
-
-print findEncoding(r'C:\Temp\tn_buld_cp949.dbf')

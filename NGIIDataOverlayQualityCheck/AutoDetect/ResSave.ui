@@ -35,7 +35,7 @@
      <item>
       <widget class="QRadioButton" name="rdoGpkg">
        <property name="enabled">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
        <property name="text">
         <string>GeoPackage</string>
@@ -122,9 +122,6 @@
     </layout>
    </item>
   </layout>
-  <zorder>verticalLayoutWidget</zorder>
-  <zorder>btnBrowse</zorder>
-  <zorder>horizontalLayoutWidget_3</zorder>
  </widget>
  <resources/>
  <connections/>

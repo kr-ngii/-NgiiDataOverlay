@@ -237,10 +237,6 @@ class ResSaveDialog(QDialog, ResSaveDialog_FORM_CLASS):
                     geomType = pgLayer.GetGeomType()
                     shpLayer = outDataSource.CreateLayer(layerName.encode("UTF8"), geom_type=geomType)
 
-                    # 인코딩 설정
-                    # shpLayer.setProviderEncoding("UTF8")
-                    # shpLayer.dataProvider().setEncoding("UTF8")
-
                     pgLayerDefn = pgLayer.GetLayerDefn()
                     for i in range(pgLayerDefn.GetFieldCount()):
                         fieldDefn = pgLayerDefn.GetFieldDefn(i)

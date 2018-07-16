@@ -52,7 +52,7 @@ from TmsForKorea.weblayers.olleh_maps import OlOllehStreetLayer, OlOllehHybridLa
 from TmsForKorea.weblayers.ngii_maps import OlNgiiStreetLayer, OlNgiiPhotoLayer, OlNgiiBlankLayer, OlNgiiHighDensityLayer, \
     OlNgiiColorBlindLayer, OlNgiiEnglishLayer, OlNgiiChineseLayer, OlNgiiJapaneseLayer
 
-from dlg_report_error import DlgReportError
+from dlg_input_report import DlgInputReport
 from map_select_dlg import DlgMapSelect
 from DockableMirrorMap.dockableMirrorMap import DockableMirrorMap
 
@@ -104,8 +104,10 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
         self.groupBoxList = dict()
 
-        self.dockableMirrors = []
+        self.dockableMirrors = list()
         self.lastDockableMirror = 0
+
+        self.errorReportList = list()
 
         ip = socket.gethostbyname(socket.gethostname())
         # 지리원 내부 IP 확인
@@ -132,6 +134,14 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
     # 독 윈도우 토글 처리
     def closeEvent(self, event):
+        # 오류 캡춰 삭제
+        for i in range(len(self.errorReportList)):
+            try:
+                errorData = self.errorReportList.pop()
+                os.remove(errorData["image"])
+            except:
+                continue
+
         self.closingPlugin.emit()
         event.accept()
 
@@ -178,16 +188,11 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         self.connect(self.btnLoadTms, SIGNAL("clicked()"), self._on_click_btnLoadTms)
         self.connect(self.btnLoadBaseMap, SIGNAL("clicked()"), self._on_click_btnLoadBaseMap)
         self.connect(self.btnReportError, SIGNAL("clicked()"), self._on_click_btnReportError)
-        self.connect(self.btnMakeReport, SIGNAL("clicked()"), self._encoding_test)
+        self.connect(self.btnMakeReport, SIGNAL("clicked()"), self._on_click_btnMakeReport)
 
         root = QgsProject.instance().layerTreeRoot()
         root.willRemoveChildren.connect(self.onWillRemoveChildren)  # 이 이벤트는 제거되거나 이동되는 레이어를 찾을 수 있음
         root.removedChildren.connect(self.onRemovedChildren)  # 이 이벤트는 제거된 후에 남은 레이어를 찾을 수 있음
-
-    def _encoding_test(self):
-        for record in DBF(r'C:\_Dev\NgiiDataUtilsPlugin\NGIIDataOverlayQualityCheck\testScript\tn_buld_cp949.dbf',
-                          encoding='cp949', raw=True):
-            self.debug(record)
 
     def onWillRemoveChildren(self, node, indexFrom, indexTo):
         self.debug("[Will] indexFrom: {}, indexTo:{}".format(indexFrom, indexTo))
@@ -391,63 +396,36 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         else:
             self.enterReasion()
 
-    def enterReasion(self):
-        dlg = DlgReportError(self)
-        if not dlg.exec_():
-            return
+    def _on_click_btnMakeReport(self):
+        pass
 
+
+    def enterReasion(self):
+        # 현재 화면 캡춰
         _, tempFilePath = tempfile.mkstemp(".png")
         self.iface.mapCanvas().saveAsImage(tempFilePath)
         self.debug(tempFilePath)
 
-        with open(tempFilePath, "rb") as imgFile:
-            imgStr = imgFile.read().encode('base64')
+        dlg = DlgInputReport(self)
 
-        # 썸네일 생성
-        tnImgPath = "{}_tn.png".format(os.path.splitext(tempFilePath)[0])
-        size = (256, 256)
-        try:
-            im = Image.open(tempFilePath)
-            im.thumbnail(size, Image.ANTIALIAS)
-            im.save(tnImgPath)
+        pixmap = QPixmap(tempFilePath)
+        w = min(pixmap.width(), dlg.imgCaptured.maximumWidth())
+        h = min(pixmap.height(), dlg.imgCaptured.maximumHeight())
+        pixmap = pixmap.scaled(QSize(w, h), Qt.KeepAspectRatio, Qt.SmoothTransformation);
 
-            result = True
-        except IOError:
+        dlg.imgCaptured.setPixmap(pixmap)
+
+        if not dlg.exec_():
+            try:
+                pixmap.detach()
+                os.remove(tempFilePath)
+            except:
+                # self.error(u"파일제거 실패: " + tempFilePath)
+                pass
             return
 
-        with open(tnImgPath, "rb") as imgFile:
-            imgTnStr = imgFile.read().encode('base64')
-
-        imgExtent = self.iface.mapCanvas().extent()
-
-        # API 호출
-        saveUrl = 'http://seoul.gaia3d.com:8989/kqiweb/'
-        restapiUrl = saveUrl + 'kgi/insert_overlay.do'
-
-        savaData = {
-            "insTargetNm": "", # 오버레이 대상명 리스트
-            "insResult": dlg.lineEdit.text(),
-            "imgNm": os.path.basename(tempFilePath),
-            "img": imgStr,
-            "imgTn": imgTnStr,
-            "minX": round(imgExtent.xMinimum(), 2),
-            "minY": round(imgExtent.yMinimum(), 2),
-            "maxX": round(imgExtent.xMaximum(), 2),
-            "maxY": round(imgExtent.yMaximum(), 2)
-        }
-
-        try:
-            request = urllib2.Request(restapiUrl, json.dumps(savaData),
-                                      {'Content-Type': 'application/json'})
-            response = urllib2.urlopen(request)
-
-            res_code = response.getcode()
-            if res_code != 200:
-                self.logger.warning(response.info())
-                return result
-
-        except Exception as e:
-            return
+        else:
+            self.errorReportList.append({"image": tempFilePath, "text": dlg.edtDescrive.plainText()})
 
 
     def getNewGroupTitle(self, title):
