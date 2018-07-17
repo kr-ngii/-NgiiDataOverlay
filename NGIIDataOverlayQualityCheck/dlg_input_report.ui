@@ -42,19 +42,6 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="0">
-    <widget class="QPlainTextEdit" name="edtDescrive">
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>150</height>
-      </size>
-     </property>
-     <property name="plainText">
-      <string/>
-     </property>
-    </widget>
-   </item>
    <item row="3" column="0">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
@@ -69,6 +56,16 @@
     <widget class="QLabel" name="label">
      <property name="text">
       <string>오류에 대한 설명을 기록해 주세요. 화면과 함께 저장됩니다.</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QTextEdit" name="edtDescrive">
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>150</height>
+      </size>
      </property>
     </widget>
    </item>

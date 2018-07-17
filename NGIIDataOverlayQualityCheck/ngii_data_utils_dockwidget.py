@@ -42,7 +42,7 @@ from OnMap import OnMapLoader
 from Shp import ShpLoader
 from Gpkg import GpkgLoader
 from Dxf import DxfLoader
-from dbfread import DBF
+import sys
 
 import TmsForKorea
 from TmsForKorea import *
@@ -396,10 +396,6 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
         else:
             self.enterReasion()
 
-    def _on_click_btnMakeReport(self):
-        pass
-
-
     def enterReasion(self):
         # 현재 화면 캡춰
         _, tempFilePath = tempfile.mkstemp(".png")
@@ -425,7 +421,93 @@ class NgiiDataUtilsDockWidget(QtGui.QDockWidget, FORM_CLASS):
             return
 
         else:
-            self.errorReportList.append({"image": tempFilePath, "text": dlg.edtDescrive.plainText()})
+            self.errorReportList.append({"image": tempFilePath, "text": dlg.edtDescrive.toPlainText()})
+
+    MAX_IMG_HEIGHT = 700
+    MAX_IMG_WIDTH = 575
+
+    def _on_click_btnMakeReport(self):
+        if len(self.errorReportList) <= 0:
+            self.alert(u"기록된 오류사항이 하나도 없어 계속할 수 없습니다.\n"
+                       u"오류가 있는 부분으로 화면 이동 후 [오류사항 기록] 버튼을 눌러 화면과 설명을 기록해 주세요.")
+            return
+
+        # ReportLab이 단순 복사로는 임포트가 안되어 파이썬 경로에 추가
+        ext_lib_path = os.path.join(os.path.dirname(__file__), "libs")
+        sys.path.append(ext_lib_path)
+
+        from reportlab.pdfgen import canvas
+        from reportlab.lib.pagesizes import A4
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
+        from reportlab.lib.utils import ImageReader
+        import StringIO
+        from textwrap import wrap
+
+        from PyPDF2 import PdfFileWriter, PdfFileReader
+
+        dialog = QtGui.QFileDialog(self)
+        fpath = dialog.getSaveFileName(self, u"리포트를 저장할 파일이름 선택", None, "*.pdf")
+        if not fpath:
+            return
+
+        try:
+            pdfmetrics.registerFont(TTFont('malgun', 'malgun.ttf'))
+            outPdf = PdfFileWriter()
+
+            iPage = 0
+            for report in self.errorReportList:
+                iPage += 1
+
+                page = StringIO.StringIO()
+                cv = canvas.Canvas(page, pagesize=A4)
+                cv.setFont('malgun', 12)
+
+                # Header
+                cv.drawString(10, 820, u"공간자료 오류보고")
+                cv.line(0, 815, 600, 815)
+
+                # Footer
+                cv.line(0, 25, 600, 25)
+                cv.drawCentredString(300, 10, "{} / {}".format(iPage, len(self.errorReportList)))
+
+                # Body
+                img = ImageReader(report["image"])
+                imgWidth, imgHeight = img.getSize()
+
+                imgRate = imgHeight * 1.0 / imgWidth
+                widthBasedHeight = self.MAX_IMG_WIDTH * imgRate
+
+                if widthBasedHeight < self.MAX_IMG_HEIGHT:
+                    height = widthBasedHeight
+                    width = self.MAX_IMG_WIDTH
+                else:
+                    height = self.MAX_IMG_HEIGHT
+                    width = self.MAX_IMG_HEIGHT / imgRate
+
+                cv.drawImage(img, 10, 800 - height, width=width, height=height,
+                             preserveAspectRatio=True, mask='auto', anchor='nw')
+
+                cv.setFont('malgun', 15)
+                text = report["text"]
+
+                y = 800 - height - 30
+                for line in wrap(text.encode("CP949"), 80):
+                    cv.drawString(10, y, line.decode("CP949"))
+                    y -= 20
+
+                cv.save()
+                page.seek(0)
+
+                outPdf.addPage(PdfFileReader(page).getPage(0))
+
+            with open(fpath, "wb") as fp:
+                outPdf.write(fp)
+
+            self.info(u"오류 리포트 파일이 {}로 저장되었습니다.".format(fpath))
+
+        finally:
+            sys.path.remove(ext_lib_path)
 
 
     def getNewGroupTitle(self, title):

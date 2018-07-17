@@ -138,6 +138,7 @@ class NgiiDataUtils:
             if len(self.mainMenu.actions()) == 0:
                 self.mainMenu.deleteLater()
 
+
     #--------------------------------------------------------------------------
 
     def onClosePlugin(self):
@@ -156,14 +157,12 @@ class NgiiDataUtils:
 
         self.pluginIsActive = False
 
-
     def unload(self):
         if self.dockwidget:
             self.iface.removeDockWidget(self.dockwidget)
         self.removeNgiiMenu()
 
     #--------------------------------------------------------------------------
-
     def togglePanel(self):
         if not self.pluginIsActive:
             self.pluginIsActive = True

@@ -52,4 +52,5 @@
    - OpenLayers plugin: <https://plugins.qgis.org/plugins/openlayers_plugin/>
    - TMS for Korea plugin: <https://plugins.qgis.org/plugins/tmsforkorea/>
    - PyPDF2 package: <https://pythonhosted.org/PyPDF2/>
+   - ReportLab package: <https://bitbucket.org/rptlab/reportlab/>
    - dbfread package: <https://dbfread.readthedocs.io>
